@@ -13,39 +13,46 @@
 # the License.
 
 @ServiceNow
-@SNSource
+@SNSink
 @Smoke
 @Regression
-Feature: ServiceNow Source - Design time scenarios (macro)
+Feature: ServiceNow Sink - Design time validation scenarios (macro)
+
 
   @TS-SN-DSGN-MACRO-01
-  Scenario: Verify user should be able to validate plugin with macros in Reporting mode
+  Scenario: Verify user should be able to validate plugin with macros for Credentials section
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
-    And Select plugin: "ServiceNow" from the plugins list as: "Source"
+    And Select Sink plugin: "ServiceNow" from the plugins list
     And Navigate to the properties page of plugin: "ServiceNow"
     And Fill Reference Name
-    And Select mode as: "REPORTING"
-    And Click on the Macro button of Property: "applicationName" and set the value to: "applicationName"
     And Click on the Macro button of Property: "clientId" and set the value to: "clientId"
     And Click on the Macro button of Property: "clientSecret" and set the value to: "clientSecret"
     And Click on the Macro button of Property: "restApiEndpoint" and set the value to: "restApiEndpoint"
     And Click on the Macro button of Property: "user" and set the value to: "username"
     And Click on the Macro button of Property: "password" and set the value to: "password"
+    And Enter input plugin property: "tableName" with value: "receiving_slip_line"
     Then Validate "ServiceNow" plugin properties
 
   @TS-SN-DSGN-MACRO-02
-  Scenario: Verify user should be able to validate plugin with macros in Table mode
+  Scenario: Verify user should be able to validate plugin with macros for Configuration Properties
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
-    And Select plugin: "ServiceNow" from the plugins list as: "Source"
+    And Select Sink plugin: "ServiceNow" from the plugins list
+    And Fill Reference Name
+    And fill Credentials section for pipeline user
+    And Click on the Macro button of Property: "tableName" and set the value to: "tableName"
+    Then Validate "ServiceNow" plugin properties
+
+  @TS-SN-DSGN-MACRO-03
+  Scenario: Verify user should be able to validate plugin with macros for Advanced section
+    When Open Datafusion Project to configure pipeline
+    And Select data pipeline type as: "Data Pipeline - Batch"
+    And Select Sink plugin: "ServiceNow" from the plugins list
     And Navigate to the properties page of plugin: "ServiceNow"
     And Fill Reference Name
-    And Select mode as: "TABLE"
-    And Click on the Macro button of Property: "tableName" and set the value to: "tableName"
-    And Click on the Macro button of Property: "clientId" and set the value to: "clientId"
-    And Click on the Macro button of Property: "clientSecret" and set the value to: "clientSecret"
-    And Click on the Macro button of Property: "restApiEndpoint" and set the value to: "restApiEndpoint"
-    And Click on the Macro button of Property: "user" and set the value to: "username"
-    And Click on the Macro button of Property: "password" and set the value to: "password"
-    Then Validate "ServiceNow" plugin properties
+    And fill Credentials section for pipeline user
+    And Enter input plugin property: "tableName" with value: "proc_rec_slip_item"
+    And Click on the Macro button of Property: "OperationType" and set the value to: "OperationType"
+    And Click on the Macro button of Property: "batchSize" and set the value to: "batchSize"
+

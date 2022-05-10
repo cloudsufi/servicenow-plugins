@@ -56,10 +56,10 @@ Feature: ServiceNow Source - Run time scenarios
     And Capture the generated Output Schema
     And Close the Plugin Properties page
     And Select Sink plugin: "BigQueryTable" from the plugins list
-    And Connect source as "ServiceNow" and sink as "BigQuery" to establish connection
+    And Connect source as "ServiceNow" and sink as "BigQueryTable" to establish connection
     And Navigate to the properties page of plugin: "BigQuery"
     And Configure BigQuery sink plugin for Dataset and Table
-    Then Validate "BigQuery" plugin properties
+    Then Validate "BigQueryTable" plugin properties
     And Close the Plugin Properties page
     And Preview and run the pipeline
     And Wait till pipeline preview is in running state
@@ -82,7 +82,7 @@ Feature: ServiceNow Source - Run time scenarios
     And Select Sink plugin: "BigQueryMultiTable" from the plugins list
     And Connect source as "ServiceNow" and sink as "BigQueryMultiTable" to establish connection
     And Navigate to the properties page of plugin: "BigQuery Multi Table"
-    And Configure BigQuery sink plugin for Dataset and Table
+    And Configure BigQuery Multi Table sink plugin for Dataset
     Then Validate "BigQuery Multi Table" plugin properties
     And Close the Plugin Properties page
     And Save and Deploy Pipeline
@@ -104,10 +104,10 @@ Feature: ServiceNow Source - Run time scenarios
     Then Validate "ServiceNow" plugin properties
     And Close the Plugin Properties page
     And Select Sink plugin: "BigQueryTable" from the plugins list
-    And Connect source as "ServiceNow" and sink as "BigQuery" to establish connection
+    And Connect source as "ServiceNow" and sink as "BigQueryTable" to establish connection
     And Navigate to the properties page of plugin: "BigQuery"
     And Configure BigQuery sink plugin for Dataset and Table
-    Then Validate "BigQuery" plugin properties
+    Then Validate "BigQueryTable" plugin properties
     And Close the Plugin Properties page
     And Save and Deploy Pipeline
     And Run the Pipeline in Runtime
