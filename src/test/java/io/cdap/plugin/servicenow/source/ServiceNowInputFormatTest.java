@@ -17,6 +17,7 @@
 
 package io.cdap.plugin.servicenow.source;
 
+import io.cdap.plugin.servicenow.ServiceNowBaseConfig;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.servicenow.source.util.SourceQueryMode;
@@ -69,8 +70,8 @@ public class ServiceNowInputFormatTest {
   public void testFetchTableInfo() throws Exception {
     SourceQueryMode mode = SourceQueryMode.TABLE;
     ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
-    PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).
-            withArguments(Mockito.any(ServiceNowBaseSourceConfig.class)).thenReturn(restApi);
+    PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withParameterTypes(ServiceNowBaseConfig.class)
+      .withArguments(Mockito.any(ServiceNowBaseConfig.class)).thenReturn(restApi);
     List<Map<String, Object>> result = new ArrayList<>();
     Map<String, Object> map = new HashMap<>();
     map.put("key", "value");
@@ -168,8 +169,8 @@ public class ServiceNowInputFormatTest {
   public void testFetchTableInfoReportingMode() throws Exception {
     SourceQueryMode mode = SourceQueryMode.REPORTING;
     ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
-    PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).
-            withArguments(Mockito.any(ServiceNowBaseSourceConfig.class)).thenReturn(restApi);
+    PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withParameterTypes(ServiceNowBaseConfig.class)
+      .withArguments(Mockito.any(ServiceNowBaseConfig.class)).thenReturn(restApi);
     List<Map<String, Object>> result = new ArrayList<>();
     Map<String, Object> map = new HashMap<>();
     map.put("key", "value");
@@ -267,8 +268,8 @@ public class ServiceNowInputFormatTest {
   public void testFetchTableInfoWithEmptyTableName() throws Exception {
     SourceQueryMode mode = SourceQueryMode.TABLE;
     ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
-    PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).
-            withArguments(Mockito.any(ServiceNowBaseSourceConfig.class)).thenReturn(restApi);
+    PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withParameterTypes(ServiceNowBaseConfig.class)
+      .withArguments(Mockito.any(ServiceNowBaseConfig.class)).thenReturn(restApi);
     List<Map<String, Object>> result = new ArrayList<>();
     Map<String, Object> map = new HashMap<>();
     map.put("key", "value");
