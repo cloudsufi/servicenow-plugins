@@ -26,7 +26,7 @@ on:
 
 jobs:
   trigger:
-    runs-on: rdp-cdap-poojan
+    runs-on: cdf-ent-con-poojan
 
     # We allow builds:
     # 1) When triggered manually
