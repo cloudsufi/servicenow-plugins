@@ -32,7 +32,7 @@ Feature: ServiceNow Multi Source - Run time scenarios
     And Select Sink plugin: "BigQueryMultiTable" from the plugins list
     And Connect source as "ServiceNow" and sink as "BigQueryMultiTable" to establish connection
     And Navigate to the properties page of plugin: "BigQuery Multi Table"
-    And Configure BigQuery sink plugin for Dataset and Table
+    And Configure BigQuery Multi Table sink plugin for Dataset
     Then Validate "BigQuery Multi Table" plugin properties
     And Close the Plugin Properties page
     And Preview and run the pipeline
@@ -53,7 +53,7 @@ Feature: ServiceNow Multi Source - Run time scenarios
     And Select Sink plugin: "BigQueryMultiTable" from the plugins list
     And Connect source as "ServiceNow" and sink as "BigQueryMultiTable" to establish connection
     And Navigate to the properties page of plugin: "BigQuery Multi Table"
-    And Configure BigQuery sink plugin for Dataset and Table
+    And Configure BigQuery Multi Table sink plugin for Dataset
     Then Validate "BigQuery Multi Table" plugin properties
     And Close the Plugin Properties page
     And Save and Deploy Pipeline

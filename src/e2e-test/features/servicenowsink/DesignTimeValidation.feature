@@ -13,16 +13,16 @@
 # the License.
 
 @ServiceNow
-@SNSource
+@SNSink
 @Smoke
 @Regression
-Feature: ServiceNow Source - Design time validation scenarios
+Feature: ServiceNow Sink - Design time validation scenarios
 
   @TS-SN-DSGN-ERROR-01
   Scenario: Verify required fields missing validation messages
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
-    And Select plugin: "ServiceNow" from the plugins list as: "Source"
+    And Select Sink plugin: "ServiceNow" from the plugins list
     And Navigate to the properties page of plugin: "ServiceNow"
     And Click on the Validate button
     Then Verify mandatory property error for below listed properties:
@@ -37,9 +37,10 @@ Feature: ServiceNow Source - Design time validation scenarios
   Scenario: Verify invalid credentials validation messages
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
-    And Select plugin: "ServiceNow" from the plugins list as: "Source"
+    And Select Sink plugin: "ServiceNow" from the plugins list
     And Navigate to the properties page of plugin: "ServiceNow"
-    And configure ServiceNow source plugin for table: "HARDWARE_CATALOG" in the Table mode
+    And Fill Reference Name
+    And Enter input plugin property: "tableName" with value: "receiving_slip_line"
     And fill Credentials section with invalid credentials
     And Click on the Validate button
     Then Verify invalid credentials validation message for below listed properties:
@@ -53,25 +54,10 @@ Feature: ServiceNow Source - Design time validation scenarios
   Scenario: Verify validation message for invalid table name
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
-    And Select plugin: "ServiceNow" from the plugins list as: "Source"
+    And Select Sink plugin: "ServiceNow" from the plugins list
     And Navigate to the properties page of plugin: "ServiceNow"
-    And configure ServiceNow source plugin for table: "INVALID_TABLE" in the Table mode
+    And Enter input plugin property: "tableName" with value: "invalid.tablename"
+    And Fill Reference Name
     And fill Credentials section for pipeline user
     And Click on the Validate button
     Then Verify that the Plugin Property: "tableName" is displaying an in-line error message: "invalid.property.tablename"
-
-  @TS-SN-DSGN-ERROR-04
-  Scenario: Verify validation message for Start date and End date in invalid format
-    When Open Datafusion Project to configure pipeline
-    And Select data pipeline type as: "Data Pipeline - Batch"
-    And Select plugin: "ServiceNow" from the plugins list as: "Source"
-    And Navigate to the properties page of plugin: "ServiceNow"
-    And configure ServiceNow source plugin for table: "HARDWARE_CATALOG" in the Table mode
-    And fill Credentials section for pipeline user
-    And Enter input plugin property: "startDate" with value: "2020-JAN-01"
-    And Click on the Validate button
-    Then Verify that the Plugin Property: "startDate" is displaying an in-line error message: "invalid.property.startdate"
-    And Enter input plugin property: "startDate" with value: "start.date"
-    And Enter input plugin property: "endDate" with value: "2021-DEC-31"
-    And Click on the Validate button
-    Then Verify that the Plugin Property: "endDate" is displaying an in-line error message: "invalid.property.enddate"

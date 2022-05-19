@@ -22,7 +22,7 @@ Feature: ServiceNow Multi Source - Design time validation scenarios
   Scenario: Verify required fields missing validation messages
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
-    And Select plugin: "ServiceNow Multi Source" from the plugins list as: "source"
+    And Select plugin: "ServiceNow Multi Source" from the plugins list as: "Source"
     And Navigate to the properties page of plugin: "ServiceNow Multi Source"
     And Click on the Validate button
     Then Verify mandatory property error for below listed properties:
@@ -37,19 +37,19 @@ Feature: ServiceNow Multi Source - Design time validation scenarios
   Scenario: Verify validation message for invalid table name
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
-    And Select plugin: "ServiceNow Multi Source" from the plugins list as: "source"
+    And Select plugin: "ServiceNow Multi Source" from the plugins list as: "Source"
     And Navigate to the properties page of plugin: "ServiceNow Multi Source"
     And configure ServiceNow Multi source plugin for below listed tables:
       | INVALID_TABLE |
     And fill Credentials section for pipeline user
     And Click on the Validate button
-    Then Verify that the Plugin Property: "tableNames" is displaying an in-line error message: "invalid.property.tablename"
+    Then Verify that the Plugin is displaying an error message: "invalid.property.tablename" on the header
 
   @TS-SN-MULTI-DSGN-ERROR-03
   Scenario: Verify validation message for Start date and End date in invalid format
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
-    And Select plugin: "ServiceNow Multi Source" from the plugins list as: "source"
+    And Select plugin: "ServiceNow Multi Source" from the plugins list as: "Source"
     And Navigate to the properties page of plugin: "ServiceNow Multi Source"
     And configure ServiceNow Multi source plugin for below listed tables:
       | HARDWARE_CATALOG | SOFTWARE_CATALOG | PRODUCT_CATALOG_ITEM | VENDOR_CATALOG_ITEM |
