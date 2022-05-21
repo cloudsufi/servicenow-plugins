@@ -19,11 +19,18 @@
 Feature: ServiceNow Sink - Design time validation scenarios (macro)
 
 
-  @TS-SN-DSGN-MACRO-01
+  @TS-SN-DSGN-SINK-MACRO-01 @BQ_SOURCE_TEST_RECEIVING_SLIP_LINE
   Scenario: Verify user should be able to validate plugin with macros for Credentials section
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
+    And Select plugin: "BigQuery" from the plugins list as: "Source"
+    And Navigate to the properties page of plugin: "BigQuery"
+    And Fill Reference Name
+    And Configure BigQuery source plugin for Dataset and Table
+    And Validate "BigQuery" plugin properties
+    And Close the Plugin Properties page
     And Select Sink plugin: "ServiceNow" from the plugins list
+    And Connect plugins: "BigQuery" and "ServiceNow" to establish connection
     And Navigate to the properties page of plugin: "ServiceNow"
     And Fill Reference Name
     And Click on the Macro button of Property: "clientId" and set the value to: "clientId"
@@ -34,25 +41,41 @@ Feature: ServiceNow Sink - Design time validation scenarios (macro)
     And Enter input plugin property: "tableName" with value: "receiving_slip_line"
     Then Validate "ServiceNow" plugin properties
 
-  @TS-SN-DSGN-MACRO-02
+  @TS-SN-DSGN-SINK-MACRO-02 @BQ_SOURCE_TEST_RECEIVING_SLIP_LINE
   Scenario: Verify user should be able to validate plugin with macros for Configuration Properties
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
+    And Select plugin: "BigQuery" from the plugins list as: "Source"
+    And Navigate to the properties page of plugin: "BigQuery"
+    And Fill Reference Name
+    And Configure BigQuery source plugin for Dataset and Table
+    And Validate "BigQuery" plugin properties
+    And Close the Plugin Properties page
     And Select Sink plugin: "ServiceNow" from the plugins list
+    And Connect plugins: "BigQuery" and "ServiceNow" to establish connection
+    And Navigate to the properties page of plugin: "ServiceNow"
     And Fill Reference Name
     And fill Credentials section for pipeline user
     And Click on the Macro button of Property: "tableName" and set the value to: "tableName"
     Then Validate "ServiceNow" plugin properties
 
-  @TS-SN-DSGN-MACRO-03
+  @TS-SN-DSGN-SINK-MACRO-03 @BQ_SOURCE_TEST_RECEIVING_SLIP_LINE
   Scenario: Verify user should be able to validate plugin with macros for Advanced section
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
+    And Select plugin: "BigQuery" from the plugins list as: "Source"
+    And Navigate to the properties page of plugin: "BigQuery"
+    And Fill Reference Name
+    And Configure BigQuery source plugin for Dataset and Table
+    And Validate "BigQuery" plugin properties
+    And Close the Plugin Properties page
     And Select Sink plugin: "ServiceNow" from the plugins list
+    And Connect plugins: "BigQuery" and "ServiceNow" to establish connection
     And Navigate to the properties page of plugin: "ServiceNow"
     And Fill Reference Name
     And fill Credentials section for pipeline user
-    And Enter input plugin property: "tableName" with value: "proc_rec_slip_item"
-    And Click on the Macro button of Property: "OperationType" and set the value to: "OperationType"
+    And Enter input plugin property: "tableName" with value: "receiving_slip_line"
+    And Click on the Macro button of Property: "operation" and set the value to: "operation"
     And Click on the Macro button of Property: "batchSize" and set the value to: "batchSize"
+    Then Validate "ServiceNow" plugin properties
 

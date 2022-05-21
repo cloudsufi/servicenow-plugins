@@ -18,7 +18,7 @@
 @Regression
 Feature: ServiceNow Sink - Design time validation scenarios
 
-  @TS-SN-DSGN-ERROR-01
+  @TS-SN-DSGN-SINK-ERROR-01
   Scenario: Verify required fields missing validation messages
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
@@ -33,7 +33,7 @@ Feature: ServiceNow Sink - Design time validation scenarios
       | user            |
       | password        |
 
-  @TS-SN-DSGN-ERROR-02
+  @TS-SN-DSGN-SINK-ERROR-02
   Scenario: Verify invalid credentials validation messages
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
@@ -50,7 +50,7 @@ Feature: ServiceNow Sink - Design time validation scenarios
       | user            |
       | password        |
 
-  @TS-SN-DSGN-ERROR-03
+  @TS-SN-DSGN-SINK-ERROR-03
   Scenario: Verify validation message for invalid table name
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"

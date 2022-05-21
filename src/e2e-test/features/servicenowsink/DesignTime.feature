@@ -18,12 +18,13 @@
 @Regression
 Feature: ServiceNow Sink - Design time scenarios
 
-  @TS-SN-DSGN-01 @BQ_SOURCE_TEST_RECEIVING_SLIP_LINE
+  @TS-SN-DSGN-SINK-01 @BQ_SOURCE_TEST_RECEIVING_SLIP_LINE @BQ_SOURCE_TEST_RECEIVING_SLIP_LINE
   Scenario Outline: Verify user should be able to validate the plugin
     When Open Datafusion Project to configure pipeline
     And Select data pipeline type as: "Data Pipeline - Batch"
     And Select plugin: "BigQuery" from the plugins list as: "Source"
     And Navigate to the properties page of plugin: "BigQuery"
+    And Fill Reference Name
     And Configure BigQuery source plugin for Dataset and Table
     And Validate "BigQuery" plugin properties
     And Close the Plugin Properties page

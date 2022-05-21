@@ -24,6 +24,7 @@ import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.plugin.servicenow.restapi.RestAPIClient;
@@ -126,6 +127,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
       this.conf.getRestApiEndpoint(), tableName);
 
     RestAPIResponse apiResponse = null;
+    String systemID = null;
 
     try {
       String accessToken = getAccessToken();
@@ -134,6 +136,8 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
       requestBuilder.setContentTypeHeader("application/json");
       requestBuilder.setEntity(entity);
       apiResponse = executePost(requestBuilder.build());
+      systemID = String.valueOf(getSystemId(apiResponse));
+
       if (!apiResponse.isSuccess()) {
         LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
       } else {
@@ -143,6 +147,19 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
       LOG.error("Error in creating a new record", e);
       throw new RuntimeException("Error in creating a new record");
     }
+  }
+/**
+ * Fetches the System Id of a new Record.
+ *
+ * @param apiResponse API response after Creating a record
+ */
+  public JsonElement getSystemId(RestAPIResponse apiResponse) {
+
+    Gson gson = new Gson();
+    JsonObject jo = gson.fromJson(apiResponse.getResponseBody(), JsonObject.class);
+    JsonObject ja= (JsonObject) jo.get("result");
+
+    return ja.get("sys_id");
   }
 
   /**
