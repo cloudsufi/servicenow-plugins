@@ -82,6 +82,16 @@ public interface ServiceNowConstants {
   String PROPERTY_PASSWORD = "password";
 
   /**
+   * Configuration property name used to specify the type of operation.
+   */
+  String PROPERTY_OPERATION = "operation";
+
+  /**
+   * Configuration property name used to specify the number of records per batch.
+   */
+  String PROPERTY_MAX_RECORDS_PER_BATCH = "maxRecordsPerBatch";
+
+  /**
    * Configuration property name used to specify value type.
    */
   String PROPERTY_VALUE_TYPE = "valueType";
