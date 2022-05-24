@@ -21,7 +21,6 @@ import io.cdap.cdap.etl.api.validation.CauseAttributes;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.api.validation.ValidationFailure;
 import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
-import io.cdap.plugin.servicenow.ServiceNowBaseConfig;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
@@ -563,7 +562,7 @@ public class ServiceNowSourceConfigTest {
                                                               FailureCollector collector) {
     ServiceNowSourceConfig spy = Mockito.spy(config);
     Mockito.doNothing().when(spy).validateServiceNowConnection(collector);
-    Mockito.doNothing().when(spy).validateTable(config.getTableName(), config.getValueType(), collector);
+    Mockito.doNothing().when(spy).validateTable(config.getTableName(), collector);
     return spy;
   }
 
@@ -613,8 +612,8 @@ public class ServiceNowSourceConfigTest {
       .build();
     ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
     Mockito.when(restApi.getAccessToken()).thenReturn("token");
-    PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withParameterTypes(ServiceNowBaseConfig.class)
-      .withArguments(Mockito.any(ServiceNowBaseConfig.class)).thenReturn(restApi);
+    PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).
+      withArguments(Mockito.any(ServiceNowBaseSourceConfig.class)).thenReturn(restApi);
 
     int httpStatus = HttpStatus.SC_OK;
     Map<String, String> headers = new HashMap<>();
@@ -644,8 +643,8 @@ public class ServiceNowSourceConfigTest {
       .build();
     ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
     Mockito.when(restApi.getAccessToken()).thenReturn("token");
-    PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withParameterTypes(ServiceNowBaseConfig.class)
-      .withArguments(Mockito.any(ServiceNowBaseConfig.class)).thenReturn(restApi);
+    PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).
+      withArguments(Mockito.any(ServiceNowBaseSourceConfig.class)).thenReturn(restApi);
     int httpStatus = HttpStatus.SC_BAD_REQUEST;
     Map<String, String> headers = new HashMap<>();
     String responseBody = "{\n" +

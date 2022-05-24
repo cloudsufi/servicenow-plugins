@@ -23,7 +23,6 @@ import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableDataResponse;
 import io.cdap.plugin.servicenow.source.util.SchemaBuilder;
 import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
 import io.cdap.plugin.servicenow.source.util.SourceQueryMode;
-import io.cdap.plugin.servicenow.source.util.SourceValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,9 +91,8 @@ public class ServiceNowRecordReader extends ServiceNowBaseRecordReader {
     ServiceNowTableAPIClientImpl restApi = new ServiceNowTableAPIClientImpl(pluginConf);
 
     // Get the table data
-    results = restApi.fetchTableRecordsRetryableMode(tableName, pluginConf.getValueType(), pluginConf.getStartDate(),
-                                                     pluginConf.getEndDate(), split.getOffset(),
-                                                     ServiceNowConstants.PAGE_SIZE);
+    results = restApi.fetchTableRecordsRetryableMode(tableName, pluginConf.getStartDate(), pluginConf.getEndDate(),
+                                                     split.getOffset(), ServiceNowConstants.PAGE_SIZE);
     LOG.debug("Results size={}", results.size());
     if (!results.isEmpty()) {
       fetchSchema(restApi);
@@ -105,8 +103,8 @@ public class ServiceNowRecordReader extends ServiceNowBaseRecordReader {
 
   private void fetchSchema(ServiceNowTableAPIClientImpl restApi) {
     // Fetch the column definition
-    ServiceNowTableDataResponse response = restApi.fetchTableSchema(tableName, pluginConf.getValueType(), null,
-                                                                    null, false);
+    ServiceNowTableDataResponse response = restApi.fetchTableSchema(tableName, null, null,
+                                                                    false);
     if (response == null) {
       return;
     }

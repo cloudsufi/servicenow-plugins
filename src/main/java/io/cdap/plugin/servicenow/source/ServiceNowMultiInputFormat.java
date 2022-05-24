@@ -91,8 +91,8 @@ public class ServiceNowMultiInputFormat extends InputFormat<NullWritable, Struct
     // Call API to fetch first record from the table
     ServiceNowTableAPIClientImpl restApi = new ServiceNowTableAPIClientImpl(conf);
 
-    ServiceNowTableDataResponse response = restApi.fetchTableSchema(tableName, conf.getValueType(), conf.getStartDate(),
-      conf.getEndDate(), true);
+    ServiceNowTableDataResponse response = restApi.fetchTableSchema(tableName, conf.getStartDate(), conf.getEndDate(),
+      true);
     if (response == null) {
       return null;
     }

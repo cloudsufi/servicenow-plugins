@@ -82,7 +82,7 @@ public class ServiceNowSourceConfig extends ServiceNowBaseSourceConfig {
                                 @Nullable String tableNameField, @Nullable String tableName, String clientId,
                                 String clientSecret, String restApiEndpoint, String user, String password,
                                 String valueType, @Nullable String startDate, @Nullable String endDate) {
-    super(referenceName, clientId, clientSecret, restApiEndpoint, user, password, tableNameField, valueType, startDate,
+    super(referenceName, tableNameField, clientId, clientSecret, restApiEndpoint, user, password, valueType, startDate,
       endDate);
     this.referenceName = referenceName;
     this.queryMode = queryMode;
@@ -208,7 +208,7 @@ public class ServiceNowSourceConfig extends ServiceNowBaseSourceConfig {
       collector.addFailure("Table name must be specified.", null)
         .withConfigProperty(ServiceNowConstants.PROPERTY_TABLE_NAME);
     } else {
-        validateTable(tableName, getValueType(), collector);
+        validateTable(tableName, collector);
     }
   }
 
