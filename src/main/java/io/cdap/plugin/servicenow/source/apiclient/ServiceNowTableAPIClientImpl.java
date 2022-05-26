@@ -24,6 +24,7 @@ import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.plugin.servicenow.restapi.RestAPIClient;
@@ -32,7 +33,9 @@ import io.cdap.plugin.servicenow.source.ServiceNowBaseSourceConfig;
 import io.cdap.plugin.servicenow.source.util.ServiceNowColumn;
 import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
 import io.cdap.plugin.servicenow.source.util.Util;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.entity.StringEntity;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.slf4j.Logger;
@@ -126,7 +129,6 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
       this.conf.getRestApiEndpoint(), tableName);
 
     RestAPIResponse apiResponse = null;
-
     try {
       String accessToken = getAccessToken();
       requestBuilder.setAuthHeader(accessToken);
@@ -144,6 +146,90 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
       throw new RuntimeException("Error in creating a new record");
     }
   }
+
+/**
+  * Fetches the System Id of a new Record.
+  *
+  * @param apiResponse API response after Creating a record
+  */
+    public JsonElement getSystemId(RestAPIResponse apiResponse) {
+
+      Gson gson = new Gson();
+      JsonObject jo = gson.fromJson(apiResponse.getResponseBody(), JsonObject.class);
+       JsonObject ja= (JsonObject) jo.get("result");
+
+         return ja.get("sys_id");
+      }
+
+  /**
+   * Create a new record and update it in the ServiceNow Table
+   *
+   * @param tableName ServiceNow Table name
+   * @param entity Details of the Record to be created
+   */
+  public void createAndUpdateRecord(String tableName, HttpEntity entity) {
+    ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
+      this.conf.getRestApiEndpoint(), tableName);
+
+    RestAPIResponse apiResponse = null;
+    String systemID;
+    try {
+      String accessToken = getAccessToken();
+      requestBuilder.setAuthHeader(accessToken);
+      requestBuilder.setAcceptHeader("application/json");
+      requestBuilder.setContentTypeHeader("application/json");
+      requestBuilder.setEntity(entity);
+      apiResponse = executePost(requestBuilder.build());
+      systemID = String.valueOf(getSystemId(apiResponse));
+
+      System.out.println("System id : "+ systemID);
+
+      String uniqueId = "TestProductCatalogItem" + RandomStringUtils.randomAlphanumeric(10);
+      String recordDetails = "{'cost':'5000','quantity':'50','number':'" + uniqueId + "':'" + systemID + "'}";
+      StringEntity entityUpdated = new StringEntity(recordDetails);
+      updateRecord(tableName,entityUpdated,systemID);
+
+      if (!apiResponse.isSuccess()) {
+        LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
+      } else {
+        LOG.info(apiResponse.getResponseBody().toString());
+      }
+    } catch (OAuthSystemException | OAuthProblemException | UnsupportedEncodingException e) {
+      LOG.error("Error in creating a new record", e);
+      throw new RuntimeException("Error in creating a new record");
+    }
+  }
+  /**
+   * Create a new record in the ServiceNow Table
+   *
+   * @param tableName ServiceNow Table name
+   * @param entity Details of the Record to be created
+   */
+  public void updateRecord(String tableName, HttpEntity entity, String systemID) {
+    ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
+      this.conf.getRestApiEndpoint(), tableName);
+
+    RestAPIResponse apiResponse = null;
+
+    try {
+      String accessToken = getAccessToken();
+      requestBuilder.setAuthHeader(accessToken);
+      requestBuilder.setAcceptHeader("application/json");
+      requestBuilder.setContentTypeHeader("application/json");
+      requestBuilder.setEntity(entity);
+
+      apiResponse = executePatch(requestBuilder.build());
+      if (!apiResponse.isSuccess()) {
+        LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
+      } else {
+        LOG.info(apiResponse.getResponseBody().toString());
+      }
+    } catch (OAuthSystemException | OAuthProblemException | UnsupportedEncodingException e) {
+      LOG.error("Error in creating a new record", e);
+      throw new RuntimeException("Error in creating a new record");
+    }
+  }
+
 
   /**
    * Fetches the table schema for ServiceNow table.

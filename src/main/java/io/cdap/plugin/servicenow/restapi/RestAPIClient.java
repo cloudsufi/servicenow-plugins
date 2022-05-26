@@ -18,6 +18,7 @@ package io.cdap.plugin.servicenow.restapi;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -73,6 +74,29 @@ public abstract class RestAPIClient {
 
     try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
       try (CloseableHttpResponse httpResponse = httpClient.execute(httpPost)) {
+        apiResponse = RestAPIResponse.parse(httpResponse, request.getResponseHeaders());
+      }
+    } catch (Exception e) {
+      apiResponse = RestAPIResponse.defaultErrorResponse(e.getMessage());
+    }
+
+    return apiResponse;
+  }
+
+  /**
+   * Executes the Rest API request and returns the response.
+   *
+   * @param request the Rest API request
+   * @return an instance of RestAPIResponse object.
+   */
+  protected RestAPIResponse executePatch(RestAPIRequest request) throws UnsupportedEncodingException {
+    HttpPatch httpPatch = new HttpPatch(request.getUrl());
+    request.getHeaders().entrySet().forEach(e -> httpPatch.addHeader(e.getKey(), e.getValue()));
+    httpPatch.setEntity(request.getEntity());
+    RestAPIResponse apiResponse = null;
+
+    try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
+      try (CloseableHttpResponse httpResponse = httpClient.execute(httpPatch)) {
         apiResponse = RestAPIResponse.parse(httpResponse, request.getResponseHeaders());
       }
     } catch (Exception e) {

@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.tests.hooks;
 
+import com.google.api.client.util.DateTime;
 import com.google.cloud.bigquery.BigQueryException;
 import io.cdap.e2e.utils.BigQueryClient;
 import io.cdap.e2e.utils.PluginPropertyUtils;
@@ -25,15 +26,16 @@ import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.utils.enums.TablesInTableMode;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
-import net.minidev.json.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.StringEntity;
+import org.dmg.pmml.True;
 import org.junit.Assert;
 import stepsdesign.BeforeActions;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.time.LocalDate;
 import java.util.Random;
 
 /**
@@ -80,6 +82,16 @@ public class TestSetupHooks {
     tableAPIClient.createRecord(TablesInTableMode.RECEIVING_SLIP_LINE.value, entity);
   }
 
+  @Before(order = 3, value = "@SN_UPDATE_RECEIVING_SLIP_LINE")
+  public static void updateRecordInReceivingSlipLineTable() throws UnsupportedEncodingException {
+    BeforeActions.scenario.write("Create new record in Receiving Slip Line table");
+    ServiceNowTableAPIClientImpl tableAPIClient = new ServiceNowTableAPIClientImpl(config);
+    String uniqueId = "TestReceivingSlipLine" + RandomStringUtils.randomAlphanumeric(10);
+    String recordDetails = "{'cost':'100','quantity':'5','number':'" + uniqueId + "'}";
+    StringEntity entity = new StringEntity(recordDetails);
+    tableAPIClient.createAndUpdateRecord(TablesInTableMode.RECEIVING_SLIP_LINE.value, entity);
+  }
+
   @Before(order = 4, value = "@BQ_SINK")
   public static void setTempTargetBQDataset() {
     bqTargetDataset = "TestSN_dataset" + RandomStringUtils.randomAlphanumeric(10);
@@ -96,14 +108,58 @@ public class TestSetupHooks {
     Random uniqueId = new Random();
     String stringUniqueId = "ServiceNow" + RandomStringUtils.randomAlphanumeric(5);
     bqSourceTable = "testTable" + stringUniqueId;
+
     float cost = uniqueId.nextFloat();
     int quantity = uniqueId.nextInt(1000);
+    String number = "Receiving";
+    LocalDate date = LocalDate.now(); //Need to pass current_date()
 
     BigQueryClient.getSoleQueryResult("create table `" + bqSourceDataset + "." + bqSourceTable + "` as " +
                                         "SELECT * FROM UNNEST([ STRUCT(" + cost + " AS cost, "
-                                        + quantity + " AS quantity)])");
+                                        + quantity + " AS quantity,'"  + number + "'  AS number, "
+                                        + date + " AS received)])");
     BeforeActions.scenario.write("BQ source Table " + bqSourceTable + " created successfully");
   }
+
+  @Before(order = 1, value = "@BQ_SOURCE_AGENT_ASSIST_RECOMMENDATION")
+  public static void createTempSourceBQTableForAgentFile() throws IOException, InterruptedException {
+    String stringUniqueId = "ServiceNow" + RandomStringUtils.randomAlphanumeric(5);
+    bqSourceTable = "testTable" + stringUniqueId;
+
+    Boolean active = true;
+    String name = "Agent";
+    int order =12;
+    LocalDate date = LocalDate.now(); //need to pass current_date()
+
+    BigQueryClient.getSoleQueryResult("create table `" + bqSourceDataset + "." + bqSourceTable + "` as " +
+                                        "SELECT * FROM UNNEST([ STRUCT(" + active + " AS active, "
+                                        + order + " AS sys_mod_count,'"  + name + "'  AS name, "
+                                        + date + "  AS sys_created_on)])");
+    BeforeActions.scenario.write("BQ source Table " + bqSourceTable + " created successfully");
+  }
+
+  @Before(order = 1, value = "@BQ_SOURCE_VENDOR_CATALOG_ITEM")
+  public static void createTempSourceBQTableForAgentAssistRecomendation() throws IOException, InterruptedException {
+    Random uniqueId = new Random();
+    String stringUniqueId = "ServiceNow" + RandomStringUtils.randomAlphanumeric(5);
+    bqSourceTable = "testTable" + stringUniqueId;
+
+    float listPrice = uniqueId.nextFloat();
+    double price = uniqueId.nextDouble();
+    boolean outOfStock= true;
+    String name = "check";
+    int updates = uniqueId.nextInt(100);
+    LocalDate date = LocalDate.now(); //need to pass CURRENT_DATETIME()
+
+    BigQueryClient.getSoleQueryResult("create table `" + bqSourceDataset + "." + bqSourceTable + "` as " +
+                                        "SELECT * FROM UNNEST([ STRUCT(" + listPrice + " AS list_price, "
+                                        + outOfStock + " AS out_of_stock,"  + price + "  AS price,' "
+                                        + name + " ' AS sys_update_name," + updates + " AS sys_mod_count, "
+                                        + date + "  AS sys_created_on)])");
+
+    BeforeActions.scenario.write("BQ source Table " + bqSourceTable + " created successfully");
+  }
+
   @After(order = 1, value = "@BQ_SINK_CLEANUP")
   public static void deleteTempTargetBQTable() throws IOException, InterruptedException {
     try {

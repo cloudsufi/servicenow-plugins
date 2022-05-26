@@ -16,10 +16,13 @@
 
 package io.cdap.plugin.servicenow.stepsdesign;
 
+import io.cdap.e2e.pages.locators.CdfSchemaLocators;
+import io.cdap.e2e.utils.AssertionHelper;
 import io.cdap.plugin.servicenow.actions.ServiceNowPropertiesPageActions;
 import io.cdap.plugin.utils.enums.ApplicationInReportingMode;
 import io.cdap.plugin.utils.enums.PluginMode;
 import io.cdap.plugin.utils.enums.TablesInTableMode;
+import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -59,5 +62,10 @@ public class DesignTimeSteps {
   @When("fill Credentials section with invalid credentials")
   public void fillCredentialsSectionWithInvalidCredentials() {
     ServiceNowPropertiesPageActions.fillCredentialsSectionWithInvalidCredentials();
+  }
+
+  @Then("Verify not creatable Input schema fields are showing error")
+  public void checkIfNotPresentAndNotCreatableFieldsAreShowingError() {
+    AssertionHelper.verifyElementDisplayed(CdfSchemaLocators.inputSchemaNotCreatableError());
   }
 }
