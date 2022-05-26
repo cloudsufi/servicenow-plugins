@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.plugin.servicenow.source.apiclient;
+package io.cdap.plugin.servicenow.apiclient;
 
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
@@ -29,17 +29,17 @@ import com.google.gson.reflect.TypeToken;
 import io.cdap.plugin.servicenow.ServiceNowBaseConfig;
 import io.cdap.plugin.servicenow.restapi.RestAPIClient;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
-import io.cdap.plugin.servicenow.sink.ServiceNowSinkConfig;
-import io.cdap.plugin.servicenow.source.util.ServiceNowColumn;
-import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
-import io.cdap.plugin.servicenow.source.util.SourceValueType;
-import io.cdap.plugin.servicenow.source.util.Util;
+import io.cdap.plugin.servicenow.util.ServiceNowColumn;
+import io.cdap.plugin.servicenow.util.ServiceNowConstants;
+import io.cdap.plugin.servicenow.util.SourceValueType;
+import io.cdap.plugin.servicenow.util.Util;
 import org.apache.http.HttpEntity;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -61,14 +61,36 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
   private static final String FIELD_UPDATED_ON = "sys_updated_on";
   private static final String OAUTH_URL_TEMPLATE = "%s/oauth_token.do";
   private ServiceNowBaseConfig conf;
+  private String accessToken;
   
   public ServiceNowTableAPIClientImpl(ServiceNowBaseConfig conf) {
     this.conf = conf;
   }
-
+  
   public String getAccessToken() throws OAuthSystemException, OAuthProblemException {
     return generateAccessToken(String.format(OAUTH_URL_TEMPLATE, conf.getRestApiEndpoint()), conf.getClientId(),
       conf.getClientSecret(), conf.getUser(), conf.getPassword());
+  }
+
+  /**
+   * Retries to get the access token and returns the same when OAuthSystemException is thrown
+   */
+  public String getAccessTokenRetryableMode() throws ExecutionException, RetryException {
+
+    Callable<Boolean> fetchToken = () -> {
+      accessToken = getAccessToken();
+      return true;
+    };
+
+    Retryer<Boolean> retryer = RetryerBuilder.<Boolean>newBuilder()
+      .retryIfExceptionOfType(OAuthSystemException.class)
+      .withWaitStrategy(WaitStrategies.fixedWait(ServiceNowConstants.BASE_DELAY, TimeUnit.MILLISECONDS))
+      .withStopStrategy(StopStrategies.stopAfterAttempt(ServiceNowConstants.MAX_NUMBER_OF_RETRY_ATTEMPTS))
+      .build();
+
+    retryer.call(fetchToken);
+
+    return accessToken;
   }
 
   /**
@@ -124,7 +146,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
    * @param tableName ServiceNow Table name
    * @param entity Details of the Record to be created
    */
-  public void createRecord(String tableName, HttpEntity entity) {
+  public void createRecord(String tableName, HttpEntity entity) throws IOException {
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
       this.conf.getRestApiEndpoint(), tableName);
 

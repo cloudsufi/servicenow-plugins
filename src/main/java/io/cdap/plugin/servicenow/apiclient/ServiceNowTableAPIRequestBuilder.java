@@ -14,11 +14,11 @@
  * the License.
  */
 
-package io.cdap.plugin.servicenow.source.apiclient;
+package io.cdap.plugin.servicenow.apiclient;
 
 import com.google.common.base.Joiner;
 import io.cdap.plugin.servicenow.restapi.RestAPIRequest;
-import io.cdap.plugin.servicenow.source.util.SourceValueType;
+import io.cdap.plugin.servicenow.util.SourceValueType;
 
 import java.net.URLEncoder;
 import java.util.Arrays;
@@ -28,9 +28,14 @@ import java.util.Arrays;
  */
 public class ServiceNowTableAPIRequestBuilder extends RestAPIRequest.Builder {
   private static final String TABLE_API_URL_TEMPLATE = "%s/api/now/table/%s";
+  private static final String BATCH_API_URL_TEMPLATE = "%s/api/now/v1/batch";
 
   public ServiceNowTableAPIRequestBuilder(String instanceBaseUrl, String tableName) {
     super(String.format(TABLE_API_URL_TEMPLATE, instanceBaseUrl, tableName));
+  }
+
+  public ServiceNowTableAPIRequestBuilder(String instanceBaseUrl) {
+    super(String.format(BATCH_API_URL_TEMPLATE, instanceBaseUrl));
   }
 
   /**

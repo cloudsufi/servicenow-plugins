@@ -16,22 +16,23 @@
 
 package io.cdap.plugin.servicenow.sink;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.servicenow.ServiceNowBaseConfig;
-import io.cdap.plugin.servicenow.source.ServiceNowSource;
-import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIClientImpl;
-import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableDataResponse;
-import io.cdap.plugin.servicenow.source.util.SchemaBuilder;
-import io.cdap.plugin.servicenow.source.util.ServiceNowColumn;
-import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
-import io.cdap.plugin.servicenow.source.util.ServiceNowTableInfo;
-import io.cdap.plugin.servicenow.source.util.SourceValueType;
-import io.cdap.plugin.servicenow.source.util.Util;
+import io.cdap.plugin.servicenow.apiclient.ServiceNowTableAPIClientImpl;
+import io.cdap.plugin.servicenow.apiclient.ServiceNowTableDataResponse;
+import io.cdap.plugin.servicenow.util.SchemaBuilder;
+import io.cdap.plugin.servicenow.util.ServiceNowColumn;
+import io.cdap.plugin.servicenow.util.ServiceNowConstants;
+import io.cdap.plugin.servicenow.util.ServiceNowTableInfo;
+import io.cdap.plugin.servicenow.util.SourceValueType;
+import io.cdap.plugin.servicenow.util.Util;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -40,11 +41,9 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * Configuration for the {@link ServiceNowSource}.
+ * Configuration for the {@link ServiceNowSink}.
  */
 public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
-
-  private static final String SERVICENOW_ID_FIELD = "sys_id";
 
   public static final String PROPERTY_EXTERNAL_ID_FIELD = "externalIdField";
 
@@ -61,14 +60,20 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
 
   @Name(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH)
   @Macro
-  @Description("No. of requests that will be sent to ServiceNow Batch API as a payload. Default value is 200. Rest " +
+  @Description("No. of requests that will be sent to ServiceNow Batch API as a payload. Default value is 50. Rest " +
     "API property in Transaction quota section \"REST Batch API request timeout\" should be increased to use higher " +
-    "records in a batch. By default this property has a value of 30 sec which can handle approximately 200 records " +
+    "records in a batch. By default this property has a value of 30 sec which can handle approximately 50 records " +
     "in a batch. To use a bigger batch size, set it to a higher value. ")
   private Long maxRecordsPerBatch;
 
+  @Name(ServiceNowConstants.NAME_SCHEMA)
+  @Macro
+  @Nullable
+  @Description("The schema of the table to read.")
+  private String schema;
+
   /**
-   * Constructor for ServiceNowSourceConfig object.
+   * Constructor for ServiceNowSinkConfig object.
    *
    * @param referenceName The reference name
    * @param clientId The Client Id for ServiceNow
@@ -78,15 +83,13 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
    * @param password The password for ServiceNow
    * @param tableName The table name
    * @param operation The type of operation to be performed
-   * @param maxRecordsPerBatch The maximum number of records per batch
    */
   public ServiceNowSinkConfig(String referenceName, String clientId, String clientSecret, String restApiEndpoint,
                               String user, String password, @Nullable String tableName,
-                              String operation, Long maxRecordsPerBatch) {
+                              String operation) {
     super(referenceName, clientId, clientSecret, restApiEndpoint, user, password);
     this.tableName = tableName;
     this.operation = operation;
-    this.maxRecordsPerBatch = maxRecordsPerBatch;
   }
 
   @Nullable
@@ -97,35 +100,13 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
   public String getOperation() {
     return operation;
   }
-
-  public Long getMaxRecordsPerBatch() {
-    return this.maxRecordsPerBatch == null ? 0 : this.maxRecordsPerBatch;
-  }
     
   /**
    * Validates {@link ServiceNowSinkConfig} instance.
    */
   public void validate(FailureCollector collector) {
     super.validate(collector);
-    validateMaxRecordsPerBatch(collector);
     validateTable(collector);
-  }
-
-  void validateMaxRecordsPerBatch(FailureCollector collector) {
-    if (containsMacro(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH)) {
-      return;
-    }
-
-    if (Objects.isNull(maxRecordsPerBatch)) {
-      collector.addFailure("Max records per batch must be specified.", null)
-        .withConfigProperty(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH);
-    }
-
-    if (!containsMacro(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH) && (getMaxRecordsPerBatch() > 500
-      || getMaxRecordsPerBatch() < 200)) {
-      collector.addFailure("Max records per batch must not be greater than 500 or less than 200.",
-                           null).withConfigProperty(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH);
-    }
   }
 
   private void validateTable(FailureCollector collector) {
@@ -143,6 +124,21 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
     } else {
         validateTable(tableName, SourceValueType.SHOW_DISPLAY_VALUE, collector);
     }
+  }
+
+  /**
+   * @return the schema of the table
+   */
+  @Nullable
+  public Schema getSchema(FailureCollector collector) {
+    try {
+      return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
+    } catch (IOException e) {
+      collector.addFailure("Invalid schema: " + e.getMessage(), null)
+        .withConfigProperty(ServiceNowConstants.NAME_SCHEMA);
+    }
+    // if there was an error that was added, it will throw an exception, otherwise, this statement will not be executed
+    throw collector.getOrThrowException();
   }
 
   void validateSchema(Schema schema, FailureCollector collector) {
@@ -170,7 +166,7 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
       case "insert":
         break;
       case "update":
-        externalIdFieldName = SERVICENOW_ID_FIELD;
+        externalIdFieldName = ServiceNowConstants.SYS_ID;
         break;
       default:
         collector.addFailure("Unsupported value for operation: " + operation, null)
@@ -228,7 +224,7 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
   private void validateInputSchema(Schema schema, FailureCollector collector) {
     try {
       Schema tableActualSchema = getTableMetaData(tableName, this).getSchema();
-      checkCompatibility(tableActualSchema, schema, false);
+      checkCompatibility(tableActualSchema, schema);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -245,9 +241,8 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
    *
    * @param actualSchema schema calculated based on ServiceNow metadata information
    * @param providedSchema schema provided in the configuration
-   * @param checkNullable if true, checks for nullability of fields in schema are triggered.
    */
-  private void checkCompatibility(Schema actualSchema, Schema providedSchema, boolean checkNullable) {
+  private void checkCompatibility(Schema actualSchema, Schema providedSchema) {
     for (Schema.Field providedField : Objects.requireNonNull(providedSchema.getFields())) {
       Schema.Field actualField = actualSchema.getField(providedField.getName(), true);
       if (actualField == null) {
@@ -269,10 +264,6 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
         throw new IllegalArgumentException(
           String.format("Expected field '%s' to be of '%s', but it is of '%s'",
                         providedField.getName(), providedFieldSchema, actualFieldSchema));
-      }
-
-      if (checkNullable && isActualFieldNullable && !isProvidedFieldNullable) {
-        throw new IllegalArgumentException(String.format("Field '%s' should be nullable", providedField.getName()));
       }
     }
   }

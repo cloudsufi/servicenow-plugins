@@ -96,18 +96,6 @@
               }
             ]
           }
-        },
-        {
-          "widget-type": "select",
-          "label": "Max Records Per Batch",
-          "name": "maxRecordsPerBatch",
-          "widget-attributes": {
-            "values": [
-              200,
-              500
-            ],
-            "default": 200
-          }
         }
       ]
     }
@@ -127,8 +115,7 @@
           "bytes",
           "string"
         ],
-        "schema-default-type": "string",
-        "property-watch": "format"
+        "schema-default-type": "string"
       }
     }
   ],
