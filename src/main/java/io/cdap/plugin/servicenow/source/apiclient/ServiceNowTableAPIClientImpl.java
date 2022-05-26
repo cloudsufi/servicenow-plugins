@@ -29,11 +29,11 @@ import com.google.gson.reflect.TypeToken;
 import io.cdap.plugin.servicenow.ServiceNowBaseConfig;
 import io.cdap.plugin.servicenow.restapi.RestAPIClient;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
-import io.cdap.plugin.servicenow.sink.ServiceNowSinkConfig;
 import io.cdap.plugin.servicenow.source.util.ServiceNowColumn;
 import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
 import io.cdap.plugin.servicenow.source.util.SourceValueType;
 import io.cdap.plugin.servicenow.source.util.Util;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.http.HttpEntity;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
@@ -65,7 +65,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
   public ServiceNowTableAPIClientImpl(ServiceNowBaseConfig conf) {
     this.conf = conf;
   }
-
+  
   public String getAccessToken() throws OAuthSystemException, OAuthProblemException {
     return generateAccessToken(String.format(OAUTH_URL_TEMPLATE, conf.getRestApiEndpoint()), conf.getClientId(),
       conf.getClientSecret(), conf.getUser(), conf.getPassword());

@@ -92,6 +92,11 @@ public interface ServiceNowConstants {
   String PROPERTY_MAX_RECORDS_PER_BATCH = "maxRecordsPerBatch";
 
   /**
+   * Configuration property name used to get the schema.
+   */
+  String NAME_SCHEMA = "schema";
+
+  /**
    * Configuration property name used to specify value type.
    */
   String PROPERTY_VALUE_TYPE = "valueType";
@@ -165,5 +170,50 @@ public interface ServiceNowConstants {
    * The maximum number of retry attempts.
    */
   int MAX_NUMBER_OF_RETRY_ATTEMPTS = 5;
+
+  /**
+   * The API Url Template for INSERT operation .
+   */
+  String INSERT_TABLE_API_URL_TEMPLATE = "/api/now/table/%s";
+
+  /**
+   * The API Url Template for UPDATE operation
+   */
+  String UPDATE_TABLE_API_URL_TEMPLATE = "/api/now/table/%s/%s";
+
+  /**
+   * The INSERT operation
+   */
+  String INSERT_OPERATION = "insert";
+
+  /**
+   * The UPDATE operation
+   */
+  String UPDATE_OPERATION = "update";
+
+  /**
+   * The HTTP POST Request
+   */
+  String HTTP_POST = "POST";
+
+  /**
+   * The HTTP PUT Request
+   */
+  String HTTP_PUT = "PUT";
+
+  /**
+   * The ServiceNow System ID Field
+   */
+  String SYS_ID = "sys_id";
+
+  /**
+   * The serviced requests
+   */
+  String SERVICED_REQUESTS = "serviced_requests";
+
+  /**
+   * The unserviced requests
+   */
+  String UNSERVICED_REQUESTS = "unserviced_requests";
   
 }

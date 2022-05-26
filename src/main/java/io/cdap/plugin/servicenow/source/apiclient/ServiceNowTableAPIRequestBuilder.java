@@ -28,9 +28,14 @@ import java.util.Arrays;
  */
 public class ServiceNowTableAPIRequestBuilder extends RestAPIRequest.Builder {
   private static final String TABLE_API_URL_TEMPLATE = "%s/api/now/table/%s";
+  private static final String BATCH_API_URL_TEMPLATE = "%s/api/now/v1/batch";
 
   public ServiceNowTableAPIRequestBuilder(String instanceBaseUrl, String tableName) {
     super(String.format(TABLE_API_URL_TEMPLATE, instanceBaseUrl, tableName));
+  }
+
+  public ServiceNowTableAPIRequestBuilder(String instanceBaseUrl) {
+    super(String.format(BATCH_API_URL_TEMPLATE, instanceBaseUrl));
   }
 
   /**

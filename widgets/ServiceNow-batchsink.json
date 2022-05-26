@@ -103,6 +103,7 @@
           "name": "maxRecordsPerBatch",
           "widget-attributes": {
             "values": [
+              100,
               200,
               500
             ],
@@ -127,8 +128,7 @@
           "bytes",
           "string"
         ],
-        "schema-default-type": "string",
-        "property-watch": "format"
+        "schema-default-type": "string"
       }
     }
   ],

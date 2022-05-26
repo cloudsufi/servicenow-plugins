@@ -19,7 +19,6 @@ package io.cdap.plugin.servicenow.restapi;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.oltu.oauth2.client.OAuthClient;
@@ -65,7 +64,7 @@ public abstract class RestAPIClient {
    * @param request the Rest API request
    * @return an instance of RestAPIResponse object.
    */
-  protected RestAPIResponse executePost(RestAPIRequest request) throws UnsupportedEncodingException {
+  public RestAPIResponse executePost(RestAPIRequest request) throws UnsupportedEncodingException {
     HttpPost httpPost = new HttpPost(request.getUrl());
     request.getHeaders().entrySet().forEach(e -> httpPost.addHeader(e.getKey(), e.getValue()));
     httpPost.setEntity(request.getEntity());

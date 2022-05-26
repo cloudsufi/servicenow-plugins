@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.servicenow.sink;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -32,6 +33,7 @@ import io.cdap.plugin.servicenow.source.util.ServiceNowTableInfo;
 import io.cdap.plugin.servicenow.source.util.SourceValueType;
 import io.cdap.plugin.servicenow.source.util.Util;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -43,8 +45,6 @@ import javax.annotation.Nullable;
  * Configuration for the {@link ServiceNowSource}.
  */
 public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
-
-  private static final String SERVICENOW_ID_FIELD = "sys_id";
 
   public static final String PROPERTY_EXTERNAL_ID_FIELD = "externalIdField";
 
@@ -66,6 +66,12 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
     "records in a batch. By default this property has a value of 30 sec which can handle approximately 200 records " +
     "in a batch. To use a bigger batch size, set it to a higher value. ")
   private Long maxRecordsPerBatch;
+
+  @Name(ServiceNowConstants.NAME_SCHEMA)
+  @Macro
+  @Nullable
+  @Description("The schema of the table to read.")
+  private String schema;
 
   /**
    * Constructor for ServiceNowSourceConfig object.
@@ -122,8 +128,8 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
     }
 
     if (!containsMacro(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH) && (getMaxRecordsPerBatch() > 500
-      || getMaxRecordsPerBatch() < 200)) {
-      collector.addFailure("Max records per batch must not be greater than 500 or less than 200.",
+      || getMaxRecordsPerBatch() < 100)) {
+      collector.addFailure("Max records per batch must not be greater than 500 or less than 100.",
                            null).withConfigProperty(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH);
     }
   }
@@ -143,6 +149,21 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
     } else {
         validateTable(tableName, SourceValueType.SHOW_DISPLAY_VALUE, collector);
     }
+  }
+
+  /**
+   * @return the schema of the table
+   */
+  @Nullable
+  public Schema getSchema(FailureCollector collector) {
+    try {
+      return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
+    } catch (IOException e) {
+      collector.addFailure("Invalid schema: " + e.getMessage(), null)
+        .withConfigProperty(ServiceNowConstants.NAME_SCHEMA);
+    }
+    // if there was an error that was added, it will throw an exception, otherwise, this statement will not be executed
+    throw collector.getOrThrowException();
   }
 
   void validateSchema(Schema schema, FailureCollector collector) {
@@ -170,7 +191,7 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
       case "insert":
         break;
       case "update":
-        externalIdFieldName = SERVICENOW_ID_FIELD;
+        externalIdFieldName = ServiceNowConstants.SYS_ID;
         break;
       default:
         collector.addFailure("Unsupported value for operation: " + operation, null)
