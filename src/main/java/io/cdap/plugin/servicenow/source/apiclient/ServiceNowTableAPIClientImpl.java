@@ -34,6 +34,7 @@ import io.cdap.plugin.servicenow.source.util.ServiceNowColumn;
 import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
 import io.cdap.plugin.servicenow.source.util.SourceValueType;
 import io.cdap.plugin.servicenow.source.util.Util;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.http.HttpEntity;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
@@ -66,6 +67,15 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
     this.conf = conf;
   }
 
+  public ServiceNowTableAPIClientImpl(Configuration conf) {
+    String referenceName = "referenceName";
+    String clientId = conf.get(ServiceNowConstants.PROPERTY_CLIENT_ID);
+    String clientSecret = conf.get(ServiceNowConstants.PROPERTY_CLIENT_SECRET);
+    String apiEndPoint = conf.get(ServiceNowConstants.PROPERTY_API_ENDPOINT);
+    String user = conf.get(ServiceNowConstants.PROPERTY_USER);
+    String password = conf.get(ServiceNowConstants.PROPERTY_PASSWORD);
+    this.conf = new ServiceNowBaseConfig(referenceName, clientId, clientSecret, apiEndPoint, user, password);
+  }
   public String getAccessToken() throws OAuthSystemException, OAuthProblemException {
     return generateAccessToken(String.format(OAUTH_URL_TEMPLATE, conf.getRestApiEndpoint()), conf.getClientId(),
       conf.getClientSecret(), conf.getUser(), conf.getPassword());

@@ -56,8 +56,6 @@ public class RecordToJsonTransformer {
     JsonObject jsonObject = new JsonObject();
     for (Schema.Field field : fields) {
       String fieldName = field.getName();
-      // Use full field name for nested records to construct meaningful errors messages.
-      // Full field names will be in the following format: 'record_field_name.nested_record_field_name'
       Schema nonNullableSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable()
         : field.getSchema();
       jsonObject.addProperty(field.getName(), String.valueOf(extractValue(fieldName, record.get(field.getName()),

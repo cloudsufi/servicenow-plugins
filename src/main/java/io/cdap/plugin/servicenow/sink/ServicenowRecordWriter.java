@@ -1,83 +1,66 @@
-/*package io.cdap.plugin.servicenow.sink;
+package io.cdap.plugin.servicenow.sink;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
+import io.cdap.plugin.servicenow.source.ServiceNowSourceConfig;
 import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIClientImpl;
+import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.http.HttpStatus;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
-public abstract class ServicenowRecordWriter extends RecordWriter<NullWritable, JsonObject> {
+/**
+ *
+ */
+public class ServicenowRecordWriter extends RecordWriter<NullWritable, JsonObject> {
 
   private ServiceNowSinkConfig config;
+  private List<Request> records = new ArrayList<>();
+  private static final Logger LOG = LoggerFactory.getLogger(ServicenowRecordWriter.class);
+  private String accessToken;
+  private Long maxRecordsPerBatch;
+  private ServiceNowTableAPIClientImpl restApi;
 
 
-  public void createRecord(String tableName, HttpEntity entity) throws OAuthProblemException, OAuthSystemException,
-  IOException {
-    Integer counter = 1;
-    Map<String, String> header = new HashMap<>();
-    header.put("Content-Type", "application/json");
-    header.put("Accept", "application/json");
-    Request request = new Request();
+  ServicenowRecordWriter(ServiceNowSinkConfig config) {
+    super();
+    this.config = config;
+  }
+  /*public ServicenowRecordWriter(TaskAttemptContext taskAttemptContext) throws IOException, OAuthProblemException,
+    OAuthSystemException {
+    Configuration conf = taskAttemptContext.getConfiguration();
+    maxRecordsPerBatch = Long.parseLong(conf.get(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH));
+    restApi = new ServiceNowTableAPIClientImpl(conf);
+    accessToken = restApi.getAccessToken();
+  }*/
 
-    request.setUrl("/api/now/table/" + config.getTableName());
-    request.setId(counter.toString());
-    counter ++;
-    request.setHeader(header);
-    request.setMethod("POST");
-    request.setBody("");
-
-
-
-    HttpClient httpClient = HttpClientBuilder.create().build();
-    HttpPost post = new HttpPost();
-    Gson gson = new Gson();
-    StringEntity postingString = new StringEntity(gson.toJson(request));
-    post.setEntity(postingString);
-    httpClient.execute(post);
-
-
-    ServiceNowTableAPIClientImpl restApi = new ServiceNowTableAPIClientImpl(config);
+  @Override
+  public void write(NullWritable key, JsonObject jsonObject) throws IOException {
     RestAPIResponse apiResponse = null;
-    String accessToken = restApi.getAccessToken();
-
+    ServicenowSinkApiImp servicenowSinkApiImp = new ServicenowSinkApiImp(config);
+    Request request = servicenowSinkApiImp.getRecords(jsonObject);
+    records.add(request);
+    if (records.size() == config.getMaxRecordsPerBatch()) {
+      apiResponse = servicenowSinkApiImp.createPostRequest(records);
+      if (apiResponse.getHttpStatus() == HttpStatus.SC_CREATED) {
+        records.clear();
+      }
     }
+  }
 
-  @Override
-  public void write(NullWritable key, CSVRecord csvRecord) throws IOException {
-    //transform method sae
-    //returns the jsonobject
-    //to string
-    //encoded form
-    //set it into body
-    csvBufferSizeCheck.reset();
-    csvBufferSizeCheck.write(csvRecord);
-
-    if (csvBuffer.size() + csvBufferSizeCheck.size() > maxBytesPerBatch ||
-      csvBuffer.getRecordsCount() >= maxRecordsPerBatch) {
-      submitCurrentBatch();
-    }
-
-    csvBuffer.write(csvRecord);
+    @Override
+  public void close(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
+//call payload request
   }
 
 
-  @Override
-  public void close(Reporter reporter) throws IOException {
-
-  }
-}*/
+}

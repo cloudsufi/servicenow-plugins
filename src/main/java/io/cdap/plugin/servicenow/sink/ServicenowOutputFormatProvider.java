@@ -20,6 +20,8 @@ import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.plugin.servicenow.ServiceNowBaseConfig;
 import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.slf4j.Logger;
@@ -27,6 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 
 /**
@@ -41,28 +45,30 @@ public class ServicenowOutputFormatProvider implements OutputFormatProvider {
   /**
    * Gets properties from config and stores them as properties in map for Mapreduce.
    *
-   * @param config Servicenow batch sink configuration
+   * @param configuration Servicenow batch sink configuration
    */
-  public ServicenowOutputFormatProvider(ServiceNowSinkConfig config) throws OAuthProblemException,
+  public ServicenowOutputFormatProvider(Configuration configuration) throws OAuthProblemException,
     OAuthSystemException {
-    ImmutableMap.Builder<String, String> configBuilder = new ImmutableMap.Builder<String, String>()
+/*    ImmutableMap.Builder<String, String> configBuilder = new ImmutableMap.Builder<String, String>()
       .put(ServiceNowConstants.PROPERTY_TABLE_NAME, config.getTableName())
       .put(ServiceNowConstants.PROPERTY_OPERATION, config.getOperation())
       .put(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH, config.getMaxRecordsPerBatch().toString());
 
-    ServiceNowTableAPIClientImpl restApi = new ServiceNowTableAPIClientImpl(config);
-    restApi.getAccessToken();
+   // ServiceNowTableAPIClientImpl restApi = new ServiceNowTableAPIClientImpl(config);
+    //restApi.getAccessToken();
     configBuilder.put(ServiceNowConstants.PROPERTY_USER, config.getUser())
       .put(ServiceNowConstants.PROPERTY_PASSWORD, config.getPassword())
       .put(ServiceNowConstants.PROPERTY_CLIENT_ID, config.getClientId())
       .put(ServiceNowConstants.PROPERTY_CLIENT_SECRET, config.getClientSecret())
       .put(ServiceNowConstants.PROPERTY_API_ENDPOINT, config.getRestApiEndpoint());
 
-    this.configMap = configBuilder.build();
+    this.configMap = configBuilder.build();*/
+    this.configMap = StreamSupport.stream(configuration.spliterator(), false)
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
   @Override
   public String getOutputFormatClassName() {
-    return null;
+    return ServicenowOutputFormat.class.getName();
   }
 
   @Override

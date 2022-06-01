@@ -22,7 +22,7 @@ import java.util.List;
  */
 public class PayloadRequest {
   String id;
-  List<Request> requests;
+  List<Request> records;
 
   public String getId() {
     return id;
@@ -32,12 +32,12 @@ public class PayloadRequest {
     this.id = id;
   }
 
-  public List<Request> getResponse() {
-    return requests;
+  public List<Request> getRecords() {
+    return records;
   }
 
-  public void setResponse(List<Request> response) {
-    this.requests = response;
+  public void setRecords(List<Request> records) {
+    this.records = records;
   }
 
 }

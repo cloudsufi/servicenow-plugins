@@ -35,9 +35,12 @@ import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
 import io.cdap.plugin.servicenow.source.util.ServiceNowTableInfo;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 
+
 import java.util.stream.Collectors;
+
 
 /**
  * A {@link BatchSink} that writes data into the specified table in ServiceNow.
@@ -72,8 +75,9 @@ public class ServiceNowSink extends BatchSink<StructuredRecord, NullWritable, Js
     FailureCollector collector = context.getFailureCollector();
     conf.validate(collector);
     collector.getOrThrowException();
-
-    context.addOutput(Output.of(conf.referenceName, new ServicenowOutputFormatProvider(conf)));
+    Configuration hConf = new Configuration();
+    ServicenowOutputFormat.setOutput(hConf, conf);
+    context.addOutput(Output.of(conf.referenceName, new ServicenowOutputFormatProvider(hConf)));
 
     LineageRecorder lineageRecorder = new LineageRecorder(context, conf.referenceName);
     lineageRecorder.createExternalDataset(inputSchema);
