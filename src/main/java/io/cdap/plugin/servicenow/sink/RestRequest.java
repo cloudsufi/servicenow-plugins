@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  *
  */
-public class Request {
+public class RestRequest {
 
   private String id;
 
@@ -32,9 +32,8 @@ public class Request {
   private String url;
   private String method;
   private String body;
-  private Map<String, String> header;
- // private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
+  private List<Header> headers;
 
   public String getId() {
     return id;
@@ -42,15 +41,6 @@ public class Request {
 
   public void setId(String id) {
     this.id = id;
-  }
-
-
-  public Map<String, String> getHeader() {
-    return header;
-  }
-
-  public void setHeader(Map<String, String> header) {
-    this.header = header;
   }
 
   public String getUrl() {
@@ -75,6 +65,14 @@ public class Request {
 
   public void setBody(String body) {
     this.body = body;
+  }
+
+  public List<Header> getHeaders() {
+    return headers;
+  }
+
+  public void setHeaders(List<Header> headers) {
+    this.headers = headers;
   }
 
 }

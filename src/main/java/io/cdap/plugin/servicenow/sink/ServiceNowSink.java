@@ -76,8 +76,8 @@ public class ServiceNowSink extends BatchSink<StructuredRecord, NullWritable, Js
     conf.validate(collector);
     collector.getOrThrowException();
     Configuration hConf = new Configuration();
-    ServicenowOutputFormat.setOutput(hConf, conf);
-    context.addOutput(Output.of(conf.referenceName, new ServicenowOutputFormatProvider(hConf)));
+    ServiceNowOutputFormat.setOutput(hConf, conf);
+    context.addOutput(Output.of(conf.referenceName, new ServiceNowOutputFormatProvider(hConf)));
 
     LineageRecorder lineageRecorder = new LineageRecorder(context, conf.referenceName);
     lineageRecorder.createExternalDataset(inputSchema);

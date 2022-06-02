@@ -2,16 +2,11 @@ package io.cdap.plugin.servicenow.sink;
 
 import com.google.gson.JsonObject;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
-import io.cdap.plugin.servicenow.source.ServiceNowSourceConfig;
 import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIClientImpl;
-import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.http.HttpStatus;
-import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
-import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
@@ -24,7 +19,7 @@ import java.util.List;
 public class ServicenowRecordWriter extends RecordWriter<NullWritable, JsonObject> {
 
   private ServiceNowSinkConfig config;
-  private List<Request> records = new ArrayList<>();
+  private List<RestRequest> restRequests = new ArrayList<>();
   private static final Logger LOG = LoggerFactory.getLogger(ServicenowRecordWriter.class);
   private String accessToken;
   private Long maxRecordsPerBatch;
@@ -45,14 +40,14 @@ public class ServicenowRecordWriter extends RecordWriter<NullWritable, JsonObjec
 
   @Override
   public void write(NullWritable key, JsonObject jsonObject) throws IOException {
-    RestAPIResponse apiResponse = null;
-    ServicenowSinkApiImp servicenowSinkApiImp = new ServicenowSinkApiImp(config);
-    Request request = servicenowSinkApiImp.getRecords(jsonObject);
-    records.add(request);
-    if (records.size() == config.getMaxRecordsPerBatch()) {
-      apiResponse = servicenowSinkApiImp.createPostRequest(records);
+    RestAPIResponse apiResponse;
+    ServiceNowSinkAPIImpl servicenowSinkAPIImpl = new ServiceNowSinkAPIImpl(config);
+    RestRequest restRequest = servicenowSinkAPIImpl.getRestRequest(jsonObject);
+    restRequests.add(restRequest);
+    if (restRequests.size() == config.getMaxRecordsPerBatch()) {
+      apiResponse = servicenowSinkAPIImpl.createPostRequest(restRequests);
       if (apiResponse.getHttpStatus() == HttpStatus.SC_CREATED) {
-        records.clear();
+        restRequests.clear();
       }
     }
   }

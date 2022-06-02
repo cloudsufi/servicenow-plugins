@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,29 +15,35 @@
  */
 package io.cdap.plugin.servicenow.sink;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 /**
- *
+ *  The Payload Request
  */
 public class PayloadRequest {
-  String id;
-  List<Request> records;
 
-  public String getId() {
-    return id;
+  @SerializedName("batch_request_id")
+  private String batchRequestId;
+
+  @SerializedName("rest_requests")
+  private List<RestRequest> restRequests;
+
+  public String getBatchRequestId() {
+    return batchRequestId;
   }
 
-  public void setId(String id) {
-    this.id = id;
+  public void setBatchRequestId(String batchRequestId) {
+    this.batchRequestId = batchRequestId;
   }
 
-  public List<Request> getRecords() {
-    return records;
+  public List<RestRequest> getRestRequests() {
+    return restRequests;
   }
 
-  public void setRecords(List<Request> records) {
-    this.records = records;
+  public void setRestRequests(List<RestRequest> restRequests) {
+    this.restRequests = restRequests;
   }
 
 }

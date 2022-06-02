@@ -15,11 +15,8 @@
  */
 package io.cdap.plugin.servicenow.sink;
 
-import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.plugin.servicenow.ServiceNowBaseConfig;
-import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIClientImpl;
-import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
@@ -28,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -36,8 +32,8 @@ import java.util.stream.StreamSupport;
 /**
  *
  */
-public class ServicenowOutputFormatProvider implements OutputFormatProvider {
-  private static final Logger LOG = LoggerFactory.getLogger(ServicenowOutputFormatProvider.class);
+public class ServiceNowOutputFormatProvider implements OutputFormatProvider {
+  private static final Logger LOG = LoggerFactory.getLogger(ServiceNowOutputFormatProvider.class);
 
   private final Map<String, String> configMap;
   private ServiceNowBaseConfig config;
@@ -47,7 +43,7 @@ public class ServicenowOutputFormatProvider implements OutputFormatProvider {
    *
    * @param configuration Servicenow batch sink configuration
    */
-  public ServicenowOutputFormatProvider(Configuration configuration) throws OAuthProblemException,
+  public ServiceNowOutputFormatProvider(Configuration configuration) throws OAuthProblemException,
     OAuthSystemException {
 /*    ImmutableMap.Builder<String, String> configBuilder = new ImmutableMap.Builder<String, String>()
       .put(ServiceNowConstants.PROPERTY_TABLE_NAME, config.getTableName())
@@ -68,7 +64,7 @@ public class ServicenowOutputFormatProvider implements OutputFormatProvider {
   }
   @Override
   public String getOutputFormatClassName() {
-    return ServicenowOutputFormat.class.getName();
+    return ServiceNowOutputFormat.class.getName();
   }
 
   @Override

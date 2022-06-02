@@ -19,7 +19,7 @@ import java.util.List;
 /**
  *
  */
-public class ServicenowOutputFormat extends OutputFormat<NullWritable, JsonObject> {
+public class ServiceNowOutputFormat extends OutputFormat<NullWritable, JsonObject> {
 
 
   public static void setOutput(Configuration conf, ServiceNowSinkConfig pluginConf) {
