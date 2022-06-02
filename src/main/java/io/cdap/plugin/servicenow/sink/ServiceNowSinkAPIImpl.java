@@ -7,6 +7,7 @@ import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIRequestBuilder;
 import okhttp3.HttpUrl;
 import org.apache.http.Header;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BufferedHeader;
@@ -84,7 +85,7 @@ public class ServiceNowSinkAPIImpl {
       requestBuilder.setAcceptHeader("application/json");
       requestBuilder.setContentTypeHeader("application/json");
       Gson gson = new Gson();
-      StringEntity stringEntity = new StringEntity(gson.toJson(payloadRequest));
+      StringEntity stringEntity = new StringEntity(gson.toJson(payloadRequest), ContentType.APPLICATION_JSON);
       requestBuilder.setEntity(stringEntity);
       apiResponse = restApi.executePost(requestBuilder.build());
       if (!apiResponse.isSuccess()) {

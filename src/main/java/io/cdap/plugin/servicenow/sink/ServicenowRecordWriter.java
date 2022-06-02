@@ -52,10 +52,9 @@ public class ServicenowRecordWriter extends RecordWriter<NullWritable, JsonObjec
     }
   }
 
-    @Override
+  @Override
   public void close(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
-//call payload request
+      //call payload request
   }
-
-
+  
 }
