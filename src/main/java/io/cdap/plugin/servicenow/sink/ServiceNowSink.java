@@ -67,6 +67,12 @@ public class ServiceNowSink extends BatchSink<StructuredRecord, NullWritable, Js
     if (collector.getValidationFailures().isEmpty()) {
       conf.validateSchema(stageConfigurer.getInputSchema(), collector);
     }
+    Schema schema = conf.getSchema(collector);
+    if (schema != null) {
+      stageConfigurer.setOutputSchema(schema);
+    } else {
+      stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
+    }
 
   }
 

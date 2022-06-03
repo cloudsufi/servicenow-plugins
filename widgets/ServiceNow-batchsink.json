@@ -127,8 +127,7 @@
           "bytes",
           "string"
         ],
-        "schema-default-type": "string",
-        "property-watch": "format"
+        "schema-default-type": "string"
       }
     }
   ],

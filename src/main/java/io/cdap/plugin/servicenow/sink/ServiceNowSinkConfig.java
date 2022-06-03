@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.servicenow.sink;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -32,6 +33,7 @@ import io.cdap.plugin.servicenow.source.util.ServiceNowTableInfo;
 import io.cdap.plugin.servicenow.source.util.SourceValueType;
 import io.cdap.plugin.servicenow.source.util.Util;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -66,6 +68,12 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
     "records in a batch. By default this property has a value of 30 sec which can handle approximately 200 records " +
     "in a batch. To use a bigger batch size, set it to a higher value. ")
   private Long maxRecordsPerBatch;
+
+  @Name(ServiceNowConstants.NAME_SCHEMA)
+  @Macro
+  @Nullable
+  @Description("The schema of the table to read.")
+  private String schema;
 
   /**
    * Constructor for ServiceNowSourceConfig object.
@@ -143,6 +151,21 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
     } else {
         validateTable(tableName, SourceValueType.SHOW_DISPLAY_VALUE, collector);
     }
+  }
+
+  /**
+   * @return the schema of the table
+   */
+  @Nullable
+  public Schema getSchema(FailureCollector collector) {
+    try {
+      return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
+    } catch (IOException e) {
+      collector.addFailure("Invalid schema: " + e.getMessage(), null)
+        .withConfigProperty(ServiceNowConstants.NAME_SCHEMA);
+    }
+    // if there was an error that was added, it will throw an exception, otherwise, this statement will not be executed
+    throw collector.getOrThrowException();
   }
 
   void validateSchema(Schema schema, FailureCollector collector) {
