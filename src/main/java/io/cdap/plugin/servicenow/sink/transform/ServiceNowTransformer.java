@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,9 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.cdap.plugin.servicenow.sink;
+package io.cdap.plugin.servicenow.sink.transform;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -23,7 +22,6 @@ import io.cdap.cdap.api.data.format.UnexpectedFormatException;
 import io.cdap.cdap.api.data.schema.Schema;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -31,19 +29,16 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
-
 /**
- *
+ *  Transforms structured record to JSON object
  */
-public class RecordToJsonTransformer {
+public class ServiceNowTransformer {
 
   @Nullable
   public JsonObject transform(@Nullable StructuredRecord record) {
@@ -63,8 +58,6 @@ public class RecordToJsonTransformer {
     }
     return jsonObject;
   }
-
-
 
   private Object extractValue(String fieldName, Object value, Schema schema) {
     if (value == null) {
@@ -139,6 +132,5 @@ public class RecordToJsonTransformer {
     Instant instant = Instant.ofEpochSecond(tsInSeconds, TimeUnit.MICROSECONDS.toNanos(fraction));
     return ZonedDateTime.ofInstant(instant, zoneId);
   }
-
-
+  
 }

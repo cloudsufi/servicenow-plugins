@@ -1,54 +1,68 @@
-package io.cdap.plugin.servicenow.sink;
+/*
+ * Copyright © 2022 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package io.cdap.plugin.servicenow.sink.util;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
+import io.cdap.plugin.servicenow.sink.ServiceNowSinkConfig;
+import io.cdap.plugin.servicenow.sink.model.RestRequest;
+import io.cdap.plugin.servicenow.sink.model.ServiceNowBatchRequest;
 import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIRequestBuilder;
-import okhttp3.HttpUrl;
 import org.apache.http.Header;
+import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BufferedHeader;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- *
+ * Implementation class for ServiceNow Batch Rest API.
  */
-public class ServiceNowSinkAPIImpl {
+public class ServiceNowSinkAPIRequestImpl {
 
   private ServiceNowSinkConfig config;
-  private static final Logger LOG = LoggerFactory.getLogger(ServiceNowSinkAPIImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ServiceNowSinkAPIRequestImpl.class);
   private ServiceNowTableAPIClientImpl restApi;
   private static final String TABLE_API_URL_TEMPLATE = "/api/now/table/%s";
+  private static final String RECORD = "record";
+  private static final String HTTP_POST = "POST";
   private static Integer counter = 1;
+  private static Integer batchRequestIdCounter = 1;
 
-  public ServiceNowSinkAPIImpl(ServiceNowSinkConfig conf) {
+  public ServiceNowSinkAPIRequestImpl(ServiceNowSinkConfig conf) {
     this.config = conf;
+    restApi = new ServiceNowTableAPIClientImpl(config);
   }
 
- /* public void initialize(TaskAttemptContext taskAttemptContext) throws OAuthProblemException, OAuthSystemException {
-    Configuration conf = taskAttemptContext.getConfiguration();
-    restApi = new ServiceNowTableAPIClientImpl(conf);
-    accessToken = restApi.getAccessToken();
-  }*/
+   public RestRequest getRestRequest(JsonObject jsonObject) {
+    JsonObject restRequestPayload = new JsonObject();
+    restRequestPayload.add(RECORD, jsonObject);
 
-  protected RestRequest getRestRequest(JsonObject jsonObject) {
-
-    String data = jsonObject.toString();
+    String data = restRequestPayload.toString();
     String encodedData = Base64.getEncoder().encodeToString(data.getBytes(StandardCharsets.UTF_8));
 
     List<Header> headers = new ArrayList<>();
@@ -56,30 +70,25 @@ public class ServiceNowSinkAPIImpl {
     Header acceptHeader = new BasicHeader("Accept", "application/json");
     headers.add(contentTypeHeader);
     headers.add(acceptHeader);
-
-    /*Map<String, String> header = new HashMap<>();
-    header.put("Content-Type", "application/json");
-    header.put("Accept", "application/json");*/
+    
     RestRequest restRequest = new RestRequest();
 
     restRequest.setUrl(String.format(TABLE_API_URL_TEMPLATE, config.getTableName()));
-    //restRequest.setUrl("/api/now/table/" + config.getTableName());
     restRequest.setId(counter.toString());
     counter++;
     restRequest.setHeaders(headers);
-    restRequest.setMethod("POST");
+    restRequest.setMethod(HTTP_POST);
     restRequest.setBody(encodedData);
     return restRequest;
   }
 
-  protected RestAPIResponse createPostRequest(List<RestRequest> records) {
-    PayloadRequest payloadRequest = getPayloadRequest(records);
+  public Boolean createPostRequest(List<RestRequest> records) {
+    ServiceNowBatchRequest payloadRequest = getPayloadRequest(records);
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
       config.getRestApiEndpoint());
     RestAPIResponse apiResponse;
 
     try {
-      restApi = new ServiceNowTableAPIClientImpl(config);
       String accessToken = restApi.getAccessToken();
       requestBuilder.setAuthHeader(accessToken);
       requestBuilder.setAcceptHeader("application/json");
@@ -90,14 +99,12 @@ public class ServiceNowSinkAPIImpl {
       apiResponse = restApi.executePost(requestBuilder.build());
       if (!apiResponse.isSuccess()) {
         LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
-      } else {
-        LOG.info(apiResponse.getResponseBody());
       }
     } catch (OAuthSystemException | OAuthProblemException | UnsupportedEncodingException e) {
       LOG.error("Error in creating a new record", e);
       throw new RuntimeException("Error in creating a new record");
     }
-    return apiResponse;
+    return apiResponse.getHttpStatus() == HttpStatus.SC_OK;
   }
 
   private String getErrorMessage(String responseBody) {
@@ -110,23 +117,12 @@ public class ServiceNowSinkAPIImpl {
     }
   }
 
-  public PayloadRequest getPayloadRequest(List<RestRequest> restRequests) {
-    PayloadRequest payloadRequest = new PayloadRequest();
-    payloadRequest.setBatchRequestId("1");
+  public ServiceNowBatchRequest getPayloadRequest(List<RestRequest> restRequests) {
+    ServiceNowBatchRequest payloadRequest = new ServiceNowBatchRequest();
+    payloadRequest.setBatchRequestId(batchRequestIdCounter.toString());
     payloadRequest.setRestRequests(restRequests);
+    batchRequestIdCounter++;
 
     return payloadRequest;
-  }
-
-  public URL getBatchApiUrl() {
-    URL instanceURL = HttpUrl.parse(config.getRestApiEndpoint())
-      .newBuilder()
-      .addPathSegments("api")
-      .addPathSegment("now")
-      .addPathSegment("v1")
-      .addPathSegment("batch")
-      .build()
-      .url();
-    return instanceURL;
   }
 }

@@ -13,27 +13,27 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.cdap.plugin.servicenow.sink;
+package io.cdap.plugin.servicenow.sink.model;
 
+import com.google.gson.annotations.SerializedName;
 import org.apache.http.Header;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- *
+ *  Single Rest Request Model
  */
 public class RestRequest {
 
   private String id;
-
-  //private List<Header> headers = null;
   private String url;
   private String method;
   private String body;
 
   private List<Header> headers;
+
+  @SerializedName("exclude_response_headers")
+  private Boolean excludeResponseHeaders = true;
 
   public String getId() {
     return id;
@@ -73,6 +73,14 @@ public class RestRequest {
 
   public void setHeaders(List<Header> headers) {
     this.headers = headers;
+  }
+
+  public Boolean getExcludeResponseHeaders() {
+    return excludeResponseHeaders;
+  }
+
+  public void setExcludeResponseHeaders(Boolean excludeResponseHeaders) {
+    this.excludeResponseHeaders = excludeResponseHeaders;
   }
 
 }

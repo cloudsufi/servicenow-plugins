@@ -13,16 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.cdap.plugin.servicenow.sink;
+package io.cdap.plugin.servicenow.sink.model;
 
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
 /**
- *  The Payload Request
+ *  ServiceNow Batch Request Model
  */
-public class PayloadRequest {
+public class ServiceNowBatchRequest {
 
   @SerializedName("batch_request_id")
   private String batchRequestId;

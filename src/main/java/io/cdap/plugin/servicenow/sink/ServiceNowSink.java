@@ -33,14 +33,15 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.servicenow.sink.output.ServiceNowOutputFormat;
+import io.cdap.plugin.servicenow.sink.output.ServiceNowOutputFormatProvider;
+import io.cdap.plugin.servicenow.sink.transform.ServiceNowTransformer;
 import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
 import io.cdap.plugin.servicenow.source.util.ServiceNowTableInfo;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 
-
 import java.util.stream.Collectors;
-
 
 /**
  * A {@link BatchSink} that writes data into the specified table in ServiceNow.
@@ -51,7 +52,7 @@ import java.util.stream.Collectors;
 public class ServiceNowSink extends BatchSink<StructuredRecord, NullWritable, JsonObject> {
 
   private final ServiceNowSinkConfig conf;
-  private RecordToJsonTransformer transformer;
+  private ServiceNowTransformer transformer;
 
   public ServiceNowSink(ServiceNowSinkConfig conf) {
     this.conf = conf;
@@ -94,9 +95,8 @@ public class ServiceNowSink extends BatchSink<StructuredRecord, NullWritable, Js
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
-    this.transformer = new RecordToJsonTransformer();
+    this.transformer = new ServiceNowTransformer();
   }
-
 
   @Override
   public void transform(StructuredRecord record, Emitter<KeyValue<NullWritable, JsonObject>> emitter) {
