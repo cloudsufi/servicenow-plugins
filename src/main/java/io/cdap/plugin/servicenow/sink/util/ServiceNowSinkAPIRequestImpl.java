@@ -47,9 +47,12 @@ public class ServiceNowSinkAPIRequestImpl {
   private ServiceNowSinkConfig config;
   private static final Logger LOG = LoggerFactory.getLogger(ServiceNowSinkAPIRequestImpl.class);
   private ServiceNowTableAPIClientImpl restApi;
-  private static final String TABLE_API_URL_TEMPLATE = "/api/now/table/%s";
+  private static final String INSERT_TABLE_API_URL_TEMPLATE = "/api/now/table/%s";
+  private static final String UPDATE_TABLE_API_URL_TEMPLATE = "/api/now/table/%s/%s";
   private static final String RECORD = "record";
   private static final String HTTP_POST = "POST";
+  private static final String HTTP_PUT = "PUT";
+  private static final String SYS_ID = "sys_id";
   private static Integer counter = 1;
   private static Integer batchRequestIdCounter = 1;
 
@@ -59,6 +62,7 @@ public class ServiceNowSinkAPIRequestImpl {
   }
 
    public RestRequest getRestRequest(JsonObject jsonObject) {
+    String sysId = jsonObject.get(SYS_ID).getAsString();
     JsonObject restRequestPayload = new JsonObject();
     restRequestPayload.add(RECORD, jsonObject);
 
@@ -72,12 +76,17 @@ public class ServiceNowSinkAPIRequestImpl {
     headers.add(acceptHeader);
     
     RestRequest restRequest = new RestRequest();
-
-    restRequest.setUrl(String.format(TABLE_API_URL_TEMPLATE, config.getTableName()));
+    restRequest.setUrl(String.format(INSERT_TABLE_API_URL_TEMPLATE, config.getTableName()));
+     if (config.getOperation().equals("update")) {
+       restRequest.setUrl(String.format(UPDATE_TABLE_API_URL_TEMPLATE, config.getTableName(), sysId));
+     }
     restRequest.setId(counter.toString());
     counter++;
     restRequest.setHeaders(headers);
     restRequest.setMethod(HTTP_POST);
+     if (config.getOperation().equals("update")) {
+       restRequest.setMethod(HTTP_PUT);
+     }
     restRequest.setBody(encodedData);
     return restRequest;
   }

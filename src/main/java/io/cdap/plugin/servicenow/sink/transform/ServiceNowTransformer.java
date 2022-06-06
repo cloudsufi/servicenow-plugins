@@ -23,6 +23,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -80,8 +81,9 @@ public class ServiceNowTransformer {
           LocalTime localTime = LocalTime.ofNanoOfDay(TimeUnit.MICROSECONDS.toNanos((Long) value));
           return localTime.toString();
         case DATE:
-          long epochDay = ((Integer) value).longValue();
-          return LocalDate.ofEpochDay(epochDay).toString();
+          SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+          String date = dateFormat.format(value);
+          return date;
         case DECIMAL:
           return new BigDecimal(String.valueOf(value)).setScale(2,
                                                                 BigDecimal.ROUND_HALF_UP);
@@ -106,7 +108,7 @@ public class ServiceNowTransformer {
         byte[] encoded = Base64.getEncoder().encode(bytes);
         return new String(encoded);
       case LONG:
-        return (int) value;
+        return (int) (long) value;
       case STRING:
         return (String) value;
       case MAP:
