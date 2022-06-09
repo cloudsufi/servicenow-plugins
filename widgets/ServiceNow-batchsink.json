@@ -103,6 +103,7 @@
           "name": "maxRecordsPerBatch",
           "widget-attributes": {
             "values": [
+              100,
               200,
               500
             ],

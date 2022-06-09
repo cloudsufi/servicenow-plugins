@@ -130,8 +130,8 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
     }
 
     if (!containsMacro(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH) && (getMaxRecordsPerBatch() > 500
-      || getMaxRecordsPerBatch() < 200)) {
-      collector.addFailure("Max records per batch must not be greater than 500 or less than 200.",
+      || getMaxRecordsPerBatch() < 100)) {
+      collector.addFailure("Max records per batch must not be greater than 500 or less than 100.",
                            null).withConfigProperty(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH);
     }
   }

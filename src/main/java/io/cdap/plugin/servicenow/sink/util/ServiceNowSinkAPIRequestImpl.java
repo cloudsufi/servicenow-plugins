@@ -16,6 +16,7 @@
 package io.cdap.plugin.servicenow.sink.util;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.sink.ServiceNowSinkConfig;
@@ -49,7 +50,6 @@ public class ServiceNowSinkAPIRequestImpl {
   private ServiceNowTableAPIClientImpl restApi;
   private static final String INSERT_TABLE_API_URL_TEMPLATE = "/api/now/table/%s";
   private static final String UPDATE_TABLE_API_URL_TEMPLATE = "/api/now/table/%s/%s";
-  private static final String RECORD = "record";
   private static final String HTTP_POST = "POST";
   private static final String HTTP_PUT = "PUT";
   private static final String SYS_ID = "sys_id";
@@ -62,11 +62,21 @@ public class ServiceNowSinkAPIRequestImpl {
   }
 
    public RestRequest getRestRequest(JsonObject jsonObject) {
-    String sysId = jsonObject.get(SYS_ID).getAsString();
-    JsonObject restRequestPayload = new JsonObject();
-    restRequestPayload.add(RECORD, jsonObject);
+    JsonElement jsonElement =  jsonObject.get(SYS_ID);
+    String sysId = null;
+    
+    if (jsonElement == null) {
+      if (config.getOperation().equals("update")) {
+        throw new RuntimeException("No sys_id found in the record to be updated");
+      }
+    } else {
+      if (config.getOperation().equals("insert")) {
+        jsonObject.remove(SYS_ID);
+      }
+      sysId = jsonElement.getAsString();
+    }
 
-    String data = restRequestPayload.toString();
+    String data = jsonObject.toString();
     String encodedData = Base64.getEncoder().encodeToString(data.getBytes(StandardCharsets.UTF_8));
 
     List<Header> headers = new ArrayList<>();
@@ -108,6 +118,8 @@ public class ServiceNowSinkAPIRequestImpl {
       apiResponse = restApi.executePost(requestBuilder.build());
       if (!apiResponse.isSuccess()) {
         LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
+      } else {
+        LOG.info("API Response : {} ", apiResponse.getResponseBody());
       }
     } catch (OAuthSystemException | OAuthProblemException | UnsupportedEncodingException e) {
       LOG.error("Error in creating a new record", e);

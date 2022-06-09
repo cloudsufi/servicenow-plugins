@@ -20,17 +20,20 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.format.UnexpectedFormatException;
 import io.cdap.cdap.api.data.schema.Schema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +43,8 @@ import javax.annotation.Nullable;
  *  Transforms structured record to JSON object
  */
 public class ServiceNowTransformer {
+  private static final Logger LOG = LoggerFactory.getLogger(ServiceNowTransformer.class);
+  private static final int DEFAULT_SCALE = 8;
 
   @Nullable
   public JsonObject transform(@Nullable StructuredRecord record) {
@@ -82,10 +87,24 @@ public class ServiceNowTransformer {
           return localTime.toString();
         case DATE:
           SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-          String date = dateFormat.format(value);
-          return date;
+          Date date = null;
+          try {
+            date = dateFormat.parse(value.toString());
+          } catch (ParseException e) {
+            LOG.error("Cannot parse the value {} to date", value);
+          }
+          return dateFormat.format(date);
+        case DATETIME:
+          SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+          Date dateTime = null;
+          try {
+            dateTime = dateTimeFormat.parse(value.toString());
+          } catch (ParseException e) {
+            LOG.error("Cannot parse the value {} to dateTime", value);
+          }
+          return dateTimeFormat.format(dateTime);
         case DECIMAL:
-          return new BigDecimal(String.valueOf(value)).setScale(2,
+          return new BigDecimal(String.valueOf(value)).setScale(DEFAULT_SCALE,
                                                                 BigDecimal.ROUND_HALF_UP);
         default:
           throw new UnexpectedFormatException(String.format("Field '%s' is of unsupported type '%s'", fieldName,
@@ -96,10 +115,9 @@ public class ServiceNowTransformer {
     Schema.Type fieldType = schema.getType();
     switch (fieldType) {
       case DOUBLE:
-        return new BigDecimal(String.valueOf(value)).setScale(2,  BigDecimal.ROUND_HALF_UP);
       case FLOAT:
-        return new BigDecimal(String.valueOf(value)).setScale(2,  BigDecimal.ROUND_HALF_UP);
-        case BOOLEAN:
+        return new BigDecimal(String.valueOf(value)).setScale(DEFAULT_SCALE, BigDecimal.ROUND_HALF_UP);
+      case BOOLEAN:
         return (Boolean) value;
       case INT:
         return (Integer) value;

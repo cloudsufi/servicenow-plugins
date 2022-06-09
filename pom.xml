@@ -20,7 +20,7 @@
 
   <groupId>io.cdap.plugin</groupId>
   <artifactId>servicenow-plugins</artifactId>
-  <version>1.2.3-SNAPSHOT</version>
+  <version>1.2.7-SNAPSHOT</version>
   <name>ServiceNow Plugins</name>
   <packaging>jar</packaging>
   <description>Plugins for ServiceNow</description>
@@ -60,7 +60,8 @@
     <main.basedir>${project.basedir}</main.basedir>
     <jee.version>7</jee.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cdap.version>6.1.1</cdap.version>
+    <cdap.version>6.6.0</cdap.version>
+    <cdap.data.pipeline.version>6.4.1</cdap.data.pipeline.version>
     <cdap.plugin.version>2.3.4</cdap.plugin.version>
     <hadoop.version>2.9.2</hadoop.version>
     <httpclient.version>4.3.4</httpclient.version>
@@ -118,7 +119,7 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-data-pipeline</artifactId>
-      <version>${cdap.version}</version>
+      <version>${cdap.data.pipeline.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

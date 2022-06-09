@@ -19,9 +19,12 @@ import com.google.gson.JsonObject;
 import io.cdap.plugin.servicenow.sink.ServiceNowSinkConfig;
 import io.cdap.plugin.servicenow.sink.model.RestRequest;
 import io.cdap.plugin.servicenow.sink.util.ServiceNowSinkAPIRequestImpl;
+import io.cdap.plugin.servicenow.source.ServiceNowRecordReader;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,6 +39,8 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
   private List<RestRequest> restRequests = new ArrayList<>();
   private ServiceNowSinkAPIRequestImpl servicenowSinkAPIImpl;
 
+  private static final Logger LOG = LoggerFactory.getLogger(ServiceNowRecordWriter.class);
+
   public ServiceNowRecordWriter(ServiceNowSinkConfig config) {
     super();
     this.config = config;
@@ -47,6 +52,7 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
     RestRequest restRequest = servicenowSinkAPIImpl.getRestRequest(jsonObject);
     restRequests.add(restRequest);
     if (restRequests.size() == config.getMaxRecordsPerBatch()) {
+      LOG.info("Max Records per batch : {} ", config.getMaxRecordsPerBatch());
       Boolean isBatchCreated = servicenowSinkAPIImpl.createPostRequest(restRequests);
       if (isBatchCreated) {
         restRequests.clear();
