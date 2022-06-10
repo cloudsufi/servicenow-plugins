@@ -45,6 +45,8 @@ import javax.annotation.Nullable;
 public class ServiceNowTransformer {
   private static final Logger LOG = LoggerFactory.getLogger(ServiceNowTransformer.class);
   private static final int DEFAULT_SCALE = 8;
+  private static final String DATE_PATTERN = "yyyy-MM-dd";
+  private static final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss";
 
   @Nullable
   public JsonObject transform(@Nullable StructuredRecord record) {
@@ -86,16 +88,11 @@ public class ServiceNowTransformer {
           LocalTime localTime = LocalTime.ofNanoOfDay(TimeUnit.MICROSECONDS.toNanos((Long) value));
           return localTime.toString();
         case DATE:
-          SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-          Date date = null;
-          try {
-            date = dateFormat.parse(value.toString());
-          } catch (ParseException e) {
-            LOG.error("Cannot parse the value {} to date", value);
-          }
+          SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_PATTERN);
+          Date date = new Date(Integer.parseInt(value.toString()) * TimeUnit.DAYS.toMillis(1));
           return dateFormat.format(date);
         case DATETIME:
-          SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+          SimpleDateFormat dateTimeFormat = new SimpleDateFormat(DATE_TIME_PATTERN);
           Date dateTime = null;
           try {
             dateTime = dateTimeFormat.parse(value.toString());
