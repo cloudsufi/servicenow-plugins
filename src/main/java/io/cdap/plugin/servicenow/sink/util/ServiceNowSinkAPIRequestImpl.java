@@ -16,8 +16,10 @@
 package io.cdap.plugin.servicenow.sink.util;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.sink.ServiceNowSinkConfig;
 import io.cdap.plugin.servicenow.sink.model.RestRequest;
@@ -38,6 +40,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,26 +48,28 @@ import java.util.List;
  */
 public class ServiceNowSinkAPIRequestImpl {
 
-  private ServiceNowSinkConfig config;
   private static final Logger LOG = LoggerFactory.getLogger(ServiceNowSinkAPIRequestImpl.class);
-  private ServiceNowTableAPIClientImpl restApi;
   private static final String INSERT_TABLE_API_URL_TEMPLATE = "/api/now/table/%s";
   private static final String UPDATE_TABLE_API_URL_TEMPLATE = "/api/now/table/%s/%s";
   private static final String HTTP_POST = "POST";
   private static final String HTTP_PUT = "PUT";
   private static final String SYS_ID = "sys_id";
+  private static final String UNSERVICED_REQUESTS = "unserviced_requests";
   private static Integer counter = 1;
   private static Integer batchRequestIdCounter = 1;
+  private final ServiceNowSinkConfig config;
+  private final ServiceNowTableAPIClientImpl restApi;
+  private final List<RestRequest> unservicedRequests = new ArrayList<>();
 
   public ServiceNowSinkAPIRequestImpl(ServiceNowSinkConfig conf) {
     this.config = conf;
     restApi = new ServiceNowTableAPIClientImpl(config);
   }
 
-   public RestRequest getRestRequest(JsonObject jsonObject) {
-    JsonElement jsonElement =  jsonObject.get(SYS_ID);
+  public RestRequest getRestRequest(JsonObject jsonObject) {
+    JsonElement jsonElement = jsonObject.get(SYS_ID);
     String sysId = null;
-    
+
     if (jsonElement == null) {
       if (config.getOperation().equals("update")) {
         throw new RuntimeException("No sys_id found in the record to be updated");
@@ -84,19 +89,19 @@ public class ServiceNowSinkAPIRequestImpl {
     Header acceptHeader = new BasicHeader("Accept", "application/json");
     headers.add(contentTypeHeader);
     headers.add(acceptHeader);
-    
+
     RestRequest restRequest = new RestRequest();
     restRequest.setUrl(String.format(INSERT_TABLE_API_URL_TEMPLATE, config.getTableName()));
-     if (config.getOperation().equals("update")) {
-       restRequest.setUrl(String.format(UPDATE_TABLE_API_URL_TEMPLATE, config.getTableName(), sysId));
-     }
+    if (config.getOperation().equals("update")) {
+      restRequest.setUrl(String.format(UPDATE_TABLE_API_URL_TEMPLATE, config.getTableName(), sysId));
+    }
     restRequest.setId(counter.toString());
     counter++;
     restRequest.setHeaders(headers);
     restRequest.setMethod(HTTP_POST);
-     if (config.getOperation().equals("update")) {
-       restRequest.setMethod(HTTP_PUT);
-     }
+    if (config.getOperation().equals("update")) {
+      restRequest.setMethod(HTTP_PUT);
+    }
     restRequest.setBody(encodedData);
     return restRequest;
   }
@@ -116,15 +121,23 @@ public class ServiceNowSinkAPIRequestImpl {
       StringEntity stringEntity = new StringEntity(gson.toJson(payloadRequest), ContentType.APPLICATION_JSON);
       requestBuilder.setEntity(stringEntity);
       apiResponse = restApi.executePost(requestBuilder.build());
+
       if (!apiResponse.isSuccess()) {
         LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
       } else {
         LOG.info("API Response : {} ", apiResponse.getResponseBody());
+        JsonObject responseJSON = new JsonParser().parse(apiResponse.getResponseBody()).getAsJsonObject();
+        JsonArray unservicedRequestsArray = responseJSON.get(UNSERVICED_REQUESTS).getAsJsonArray();
+        if (unservicedRequestsArray.size() > 0) {
+          retryUnservicedRequests(records, unservicedRequestsArray);
+        }
       }
-    } catch (OAuthSystemException | OAuthProblemException | UnsupportedEncodingException e) {
+    } catch (OAuthSystemException | OAuthProblemException | UnsupportedEncodingException | InterruptedException e) {
       LOG.error("Error in creating a new record", e);
       throw new RuntimeException("Error in creating a new record");
     }
+    // Reset request counter
+    counter = 1;
     return apiResponse.getHttpStatus() == HttpStatus.SC_OK;
   }
 
@@ -145,5 +158,24 @@ public class ServiceNowSinkAPIRequestImpl {
     batchRequestIdCounter++;
 
     return payloadRequest;
+  }
+
+  private void retryUnservicedRequests(List<RestRequest> records, JsonArray unservicedRequestsArray)
+    throws InterruptedException {
+    unservicedRequests.clear();
+    List<Integer> unservicedRequestsIds = new ArrayList();
+    for (int i = 0; i < unservicedRequestsArray.size(); i++) {
+      unservicedRequestsIds.add(unservicedRequestsArray.get(i).getAsInt());
+    }
+    Collections.sort(unservicedRequestsIds);
+    int start = unservicedRequestsIds.get(0);
+    int end = unservicedRequestsIds.get(unservicedRequestsIds.size() - 1);
+    // i = start-1 because request just prior to unserviced request fail due to maximum execution time getting exceeded
+    for (int i = start - 1; i <= end; i++) {
+      unservicedRequests.add(records.get(i - 1));
+    }
+    LOG.debug("Retrying unserviced requests from Request No. {} to {}", (start - 1), end);
+    Thread.sleep(1000);
+    createPostRequest(unservicedRequests);
   }
 }
