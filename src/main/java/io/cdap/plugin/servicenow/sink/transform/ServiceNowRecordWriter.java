@@ -18,8 +18,7 @@ package io.cdap.plugin.servicenow.sink.transform;
 import com.google.gson.JsonObject;
 import io.cdap.plugin.servicenow.sink.ServiceNowSinkConfig;
 import io.cdap.plugin.servicenow.sink.model.RestRequest;
-import io.cdap.plugin.servicenow.sink.util.ServiceNowSinkAPIRequestImpl;
-import io.cdap.plugin.servicenow.source.ServiceNowRecordReader;
+import io.cdap.plugin.servicenow.sink.service.ServiceNowSinkAPIRequestImpl;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -48,12 +47,19 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
   }
 
   @Override
-  public void write(NullWritable key, JsonObject jsonObject) throws IOException {
+  public void write(NullWritable key, JsonObject jsonObject) {
     RestRequest restRequest = servicenowSinkAPIImpl.getRestRequest(jsonObject);
     restRequests.add(restRequest);
     if (restRequests.size() == config.getMaxRecordsPerBatch()) {
       LOG.info("Max Records per batch : {} ", config.getMaxRecordsPerBatch());
-      Boolean isBatchCreated = servicenowSinkAPIImpl.createPostRequest(restRequests);
+      Boolean isBatchCreated;
+      try {
+        isBatchCreated = servicenowSinkAPIImpl.createPostRequest(restRequests);
+      } catch (RuntimeException e) {
+        LOG.error(e.getMessage());
+        restRequests.clear();
+        throw e;
+      }
       if (isBatchCreated) {
         restRequests.clear();
       }
@@ -63,7 +69,10 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
   @Override
   public void close(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
     //call payload request
-    servicenowSinkAPIImpl.createPostRequest(restRequests);
+    if (!restRequests.isEmpty()) {
+      servicenowSinkAPIImpl.createPostRequest(restRequests);
+    }
+
   }
   
 }

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.cdap.plugin.servicenow.sink.util;
+package io.cdap.plugin.servicenow.sink.service;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -54,12 +54,13 @@ public class ServiceNowSinkAPIRequestImpl {
   private static final String HTTP_POST = "POST";
   private static final String HTTP_PUT = "PUT";
   private static final String SYS_ID = "sys_id";
+  private static final String SERVICED_REQUESTS = "serviced_requests";
   private static final String UNSERVICED_REQUESTS = "unserviced_requests";
   private static Integer counter = 1;
   private static Integer batchRequestIdCounter = 1;
+  private static Integer retryCounter = 0;
   private final ServiceNowSinkConfig config;
   private final ServiceNowTableAPIClientImpl restApi;
-  private final List<RestRequest> unservicedRequests = new ArrayList<>();
 
   public ServiceNowSinkAPIRequestImpl(ServiceNowSinkConfig conf) {
     this.config = conf;
@@ -127,8 +128,20 @@ public class ServiceNowSinkAPIRequestImpl {
       } else {
         LOG.info("API Response : {} ", apiResponse.getResponseBody());
         JsonObject responseJSON = new JsonParser().parse(apiResponse.getResponseBody()).getAsJsonObject();
+        JsonArray servicedRequestsArray = responseJSON.get(SERVICED_REQUESTS).getAsJsonArray();
+        for (int i = 0; i < servicedRequestsArray.size(); i++) {
+          if (servicedRequestsArray.get(i).getAsJsonObject().get("status_code").getAsInt() == HttpStatus.SC_FORBIDDEN) {
+            throw new RuntimeException("Permission denied for " + config.getOperation() + " operation");
+          }
+        }
         JsonArray unservicedRequestsArray = responseJSON.get(UNSERVICED_REQUESTS).getAsJsonArray();
         if (unservicedRequestsArray.size() > 0) {
+          if (retryCounter == 1) {
+            throw new RuntimeException("Please decrease the Max Records per Batch while configuring ServiceNow " +
+                                            "Sink Plugin or increase the REST Batch API request timeout property in " +
+                                            "ServiceNow Transaction Quota Rules");
+          }
+          LOG.info("Optimum Max Records per Batch is {}", (servicedRequestsArray.size() - 1));
           retryUnservicedRequests(records, unservicedRequestsArray);
         }
       }
@@ -138,6 +151,8 @@ public class ServiceNowSinkAPIRequestImpl {
     }
     // Reset request counter
     counter = 1;
+    // Reset retry counter
+    retryCounter = 0;
     return apiResponse.getHttpStatus() == HttpStatus.SC_OK;
   }
 
@@ -162,7 +177,7 @@ public class ServiceNowSinkAPIRequestImpl {
 
   private void retryUnservicedRequests(List<RestRequest> records, JsonArray unservicedRequestsArray)
     throws InterruptedException {
-    unservicedRequests.clear();
+    List<RestRequest> unservicedRequests = new ArrayList<>();
     List<Integer> unservicedRequestsIds = new ArrayList();
     for (int i = 0; i < unservicedRequestsArray.size(); i++) {
       unservicedRequestsIds.add(unservicedRequestsArray.get(i).getAsInt());
@@ -174,8 +189,9 @@ public class ServiceNowSinkAPIRequestImpl {
     for (int i = start - 1; i <= end; i++) {
       unservicedRequests.add(records.get(i - 1));
     }
-    LOG.debug("Retrying unserviced requests from Request No. {} to {}", (start - 1), end);
+    LOG.info("Retrying unserviced requests from Request No. {} to {}", (start - 1), end);
     Thread.sleep(1000);
+    retryCounter++;
     createPostRequest(unservicedRequests);
   }
 }
