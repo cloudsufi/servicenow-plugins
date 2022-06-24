@@ -65,16 +65,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
   public ServiceNowTableAPIClientImpl(ServiceNowBaseConfig conf) {
     this.conf = conf;
   }
-
-  public ServiceNowTableAPIClientImpl(Configuration conf) {
-    String referenceName = "referenceName";
-    String clientId = conf.get(ServiceNowConstants.PROPERTY_CLIENT_ID);
-    String clientSecret = conf.get(ServiceNowConstants.PROPERTY_CLIENT_SECRET);
-    String apiEndPoint = conf.get(ServiceNowConstants.PROPERTY_API_ENDPOINT);
-    String user = conf.get(ServiceNowConstants.PROPERTY_USER);
-    String password = conf.get(ServiceNowConstants.PROPERTY_PASSWORD);
-    this.conf = new ServiceNowBaseConfig(referenceName, clientId, clientSecret, apiEndPoint, user, password);
-  }
+  
   public String getAccessToken() throws OAuthSystemException, OAuthProblemException {
     return generateAccessToken(String.format(OAUTH_URL_TEMPLATE, conf.getRestApiEndpoint()), conf.getClientId(),
       conf.getClientSecret(), conf.getUser(), conf.getPassword());
