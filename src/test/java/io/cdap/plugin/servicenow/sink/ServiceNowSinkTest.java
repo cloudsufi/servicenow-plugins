@@ -167,7 +167,8 @@ public class ServiceNowSinkTest {
     serviceNowSink.transform(record, emitter);
     serviceNowSink.prepareRun(context);
     Assert.assertTrue(restAPIResponse.isSuccess());
-    Assert.assertEquals(Schema.Type.RECORD, record.getSchema().getType());
+    Assert.assertEquals("1", record.get("id").toString());
+    Assert.assertEquals("20.2008", record.get("price").toString());
     Assert.assertEquals(0, mockFailureCollector.getValidationFailures().size());
   }
 }

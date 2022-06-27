@@ -276,59 +276,6 @@ public class ServiceNowSinkConfigTest {
   }
 
   @Test
-  public void testValidateSchema() throws Exception {
-    MockFailureCollector collector = new MockFailureCollector();
-    ServiceNowSinkConfig config = Mockito.spy(withServiceNowValidationMock(ServiceNowSinkConfigHelper.newConfigBuilder()
-                                                                             .setTableName("tableName")
-                                                                             .setOperation("insert")
-                                                                             .build(), collector));
-    ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
-    PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withParameterTypes(ServiceNowBaseConfig.class)
-      .withArguments(Mockito.any(ServiceNowBaseConfig.class)).thenReturn(restApi);
-    List<Map<String, Object>> result = new ArrayList<>();
-    Map<String, Object> map = new HashMap<>();
-    map.put("key", "value");
-    result.add(map);
-    int httpStatus = HttpStatus.SC_OK;
-    Map<String, String> headers = new HashMap<>();
-    String responseBody = "{\n" +
-      "    \"result\": [\n" +
-      "        {\n" +
-      "            \"calendar_integration\": \"1\",\n" +
-      "            \"country\": \"\",\n" +
-      "            \"date_format\": \"\",\n" +
-      "            \"location\": \"\"\n" +
-      "        }\n" +
-      "    ]\n" +
-      "}";
-    RestAPIResponse restAPIResponse = new RestAPIResponse(httpStatus, headers, responseBody);
-    Mockito.when(restApi.executeGet(Mockito.any())).thenReturn(restAPIResponse);
-    Mockito.when(restApi.parseResponseToResultListOfMap(restAPIResponse.getResponseBody())).thenReturn(result);
-    OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
-    PowerMockito.whenNew(OAuthClient.class).
-      withArguments(Mockito.any(URLConnectionClient.class)).thenReturn(oAuthClient);
-    OAuthJSONAccessTokenResponse accessTokenResponse = Mockito.mock(OAuthJSONAccessTokenResponse.class);
-    Mockito.when(oAuthClient.accessToken(Mockito.any(), Mockito.anyString(), Mockito.any(Class.class))).
-      thenReturn(accessTokenResponse);
-    Mockito.when(accessTokenResponse.getAccessToken()).thenReturn("token");
-    RestAPIResponse response = Mockito.spy(restAPIResponse);
-    CloseableHttpClient httpClient = Mockito.mock(CloseableHttpClient.class);
-    HttpClientBuilder httpClientBuilder = Mockito.mock(HttpClientBuilder.class);
-    PowerMockito.mockStatic(HttpClientBuilder.class);
-    PowerMockito.mockStatic(RestAPIResponse.class);
-    PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
-    Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
-    CloseableHttpResponse httpResponse = Mockito.mock(CloseableHttpResponse.class);
-    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(httpResponse);
-    PowerMockito.when(RestAPIResponse.parse(ArgumentMatchers.any(), ArgumentMatchers.anyString())).
-      thenReturn(response);
-    Schema actualSchema = Schema.recordOf("actualSchema",
-                                          Schema.Field.of("country", Schema.of(Schema.Type.STRING)));
-    config.validateSchema(actualSchema, collector);
-    Assert.assertEquals(0, collector.getValidationFailures().size());
-  }
-
-  @Test
   public void testValidateSchemaWithInvalidOperation() throws Exception {
     MockFailureCollector collector = new MockFailureCollector();
     ServiceNowSinkConfig config = Mockito.spy(withServiceNowValidationMock(ServiceNowSinkConfigHelper.newConfigBuilder()
@@ -437,6 +384,7 @@ public class ServiceNowSinkConfigTest {
     Schema actualSchema = Schema.recordOf("actualSchema",
                                           Schema.Field.of("sys_id", Schema.of(Schema.Type.STRING)));
     config.validateSchema(actualSchema, collector);
+    Assert.assertEquals(Schema.Type.RECORD, actualSchema.getType());
     Assert.assertEquals(0, collector.getValidationFailures().size());
 
   }

@@ -28,30 +28,15 @@ import java.util.List;
 public class RestRequestTest {
 
   @Test
-  public void testId() {
+  public void testRestRequests() {
     RestRequest request = new RestRequest();
     request.setId("id");
-    Assert.assertEquals("id", request.getId());
-  }
-
-  @Test
-  public void testBody() {
-    RestRequest request = new RestRequest();
     request.setBody("body");
-    Assert.assertEquals("body", request.getBody());
-  }
-
-  @Test
-  public void tesUrl() {
-    RestRequest request = new RestRequest();
     request.setUrl("Servicenow.com");
-    Assert.assertEquals("Servicenow.com", request.getUrl());
-  }
-
-  @Test
-  public void testMethod() {
-    RestRequest request = new RestRequest();
     request.setMethod("POST");
+    Assert.assertEquals("id", request.getId());
+    Assert.assertEquals("body", request.getBody());
+    Assert.assertEquals("Servicenow.com", request.getUrl());
     Assert.assertEquals("POST", request.getMethod());
   }
 
@@ -72,5 +57,6 @@ public class RestRequestTest {
     headers.add(acceptHeader);
     request.setHeaders(headers);
     Assert.assertEquals(2, request.getHeaders().size());
+    Assert.assertEquals(acceptHeader, request.getHeaders().get(1));
   }
 }

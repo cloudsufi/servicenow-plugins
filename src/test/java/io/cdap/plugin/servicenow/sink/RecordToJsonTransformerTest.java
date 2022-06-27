@@ -15,12 +15,15 @@
  */
 package io.cdap.plugin.servicenow.sink;
 
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.servicenow.sink.transform.ServiceNowTransformer;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.util.Objects;
 
 public class RecordToJsonTransformerTest {
 
@@ -31,8 +34,10 @@ public class RecordToJsonTransformerTest {
     StructuredRecord record = Mockito.mock(StructuredRecord.class);
     Mockito.when(record.getSchema()).thenReturn(schema);
     ServiceNowTransformer recordToJsonTransformer = new ServiceNowTransformer();
-    Assert.assertNotNull("The value displayed for the id will be null",
-                         recordToJsonTransformer.transform(record));
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.addProperty(Objects.requireNonNull(schema.getField("id")).getName(), "null");
+    Assert.assertEquals("The value displayed for the id will be null",
+                         jsonObject, recordToJsonTransformer.transform(record));
   }
 
   @Test
