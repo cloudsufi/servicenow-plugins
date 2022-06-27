@@ -41,12 +41,6 @@ public class RecordToJsonTransformerTest {
   }
 
   @Test
-  public void testTransformWithRecordNull() {
-    ServiceNowTransformer recordToJsonTransformer = new ServiceNowTransformer();
-    Assert.assertNull(recordToJsonTransformer.transform(null));
-  }
-
-  @Test
   public void testTransformWithValue() {
     Schema schema = Schema.recordOf("record",
                                     Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
