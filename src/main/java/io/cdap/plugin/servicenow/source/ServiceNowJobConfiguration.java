@@ -19,7 +19,7 @@ package io.cdap.plugin.servicenow.source;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.plugin.servicenow.sink.ServiceNowSinkConfig;
-import io.cdap.plugin.servicenow.source.util.ServiceNowTableInfo;
+import io.cdap.plugin.servicenow.util.ServiceNowTableInfo;
 import org.apache.hadoop.conf.Configuration;
 
 import java.lang.reflect.Type;

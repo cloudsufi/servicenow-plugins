@@ -36,8 +36,8 @@ import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.servicenow.sink.output.ServiceNowOutputFormat;
 import io.cdap.plugin.servicenow.sink.output.ServiceNowOutputFormatProvider;
 import io.cdap.plugin.servicenow.sink.transform.ServiceNowTransformer;
-import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
-import io.cdap.plugin.servicenow.source.util.ServiceNowTableInfo;
+import io.cdap.plugin.servicenow.util.ServiceNowConstants;
+import io.cdap.plugin.servicenow.util.ServiceNowTableInfo;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package io.cdap.plugin.servicenow.source.apiclient;
+package io.cdap.plugin.servicenow.apiclient;
 
 import com.google.common.base.Joiner;
 import io.cdap.plugin.servicenow.restapi.RestAPIRequest;
-import io.cdap.plugin.servicenow.source.util.SourceValueType;
+import io.cdap.plugin.servicenow.util.SourceValueType;
 
 import java.net.URLEncoder;
 import java.util.Arrays;

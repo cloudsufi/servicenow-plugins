@@ -23,15 +23,14 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.servicenow.ServiceNowBaseConfig;
-import io.cdap.plugin.servicenow.source.ServiceNowSource;
-import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableAPIClientImpl;
-import io.cdap.plugin.servicenow.source.apiclient.ServiceNowTableDataResponse;
-import io.cdap.plugin.servicenow.source.util.SchemaBuilder;
-import io.cdap.plugin.servicenow.source.util.ServiceNowColumn;
-import io.cdap.plugin.servicenow.source.util.ServiceNowConstants;
-import io.cdap.plugin.servicenow.source.util.ServiceNowTableInfo;
-import io.cdap.plugin.servicenow.source.util.SourceValueType;
-import io.cdap.plugin.servicenow.source.util.Util;
+import io.cdap.plugin.servicenow.apiclient.ServiceNowTableAPIClientImpl;
+import io.cdap.plugin.servicenow.apiclient.ServiceNowTableDataResponse;
+import io.cdap.plugin.servicenow.util.SchemaBuilder;
+import io.cdap.plugin.servicenow.util.ServiceNowColumn;
+import io.cdap.plugin.servicenow.util.ServiceNowConstants;
+import io.cdap.plugin.servicenow.util.ServiceNowTableInfo;
+import io.cdap.plugin.servicenow.util.SourceValueType;
+import io.cdap.plugin.servicenow.util.Util;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,7 +41,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * Configuration for the {@link ServiceNowSource}.
+ * Configuration for the {@link ServiceNowSink}.
  */
 public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
 
