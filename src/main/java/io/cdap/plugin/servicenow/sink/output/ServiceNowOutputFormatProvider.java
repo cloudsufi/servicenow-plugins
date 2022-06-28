@@ -17,7 +17,6 @@ package io.cdap.plugin.servicenow.sink.output;
 
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,7 +34,7 @@ public class ServiceNowOutputFormatProvider implements OutputFormatProvider {
    *
    * @param configuration Servicenow batch sink configuration
    */
-  public ServiceNowOutputFormatProvider(Configuration configuration) throws OAuthProblemException {
+  public ServiceNowOutputFormatProvider(Configuration configuration) {
     
     this.configMap = StreamSupport.stream(configuration.spliterator(), false)
       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

@@ -124,6 +124,7 @@ public class ServiceNowSinkAPIRequestImpl {
 
       if (!apiResponse.isSuccess()) {
         LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
+        throw new RuntimeException();
       } else {
         LOG.info("API Response : {} ", apiResponse.getResponseBody());
         JsonObject responseJSON = new JsonParser().parse(apiResponse.getResponseBody()).getAsJsonObject();

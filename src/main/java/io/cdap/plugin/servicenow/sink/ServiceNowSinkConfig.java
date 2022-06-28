@@ -73,7 +73,7 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
   private String schema;
 
   /**
-   * Constructor for ServiceNowSourceConfig object.
+   * Constructor for ServiceNowSinkConfig object.
    *
    * @param referenceName The reference name
    * @param clientId The Client Id for ServiceNow

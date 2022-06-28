@@ -41,7 +41,6 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
   private static final Logger LOG = LoggerFactory.getLogger(ServiceNowRecordWriter.class);
 
   public ServiceNowRecordWriter(ServiceNowSinkConfig config) {
-    super();
     this.config = config;
     servicenowSinkAPIImpl = new ServiceNowSinkAPIRequestImpl(config);
   }

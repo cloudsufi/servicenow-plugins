@@ -31,13 +31,11 @@ import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
-import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.servicenow.sink.output.ServiceNowOutputFormat;
 import io.cdap.plugin.servicenow.sink.output.ServiceNowOutputFormatProvider;
 import io.cdap.plugin.servicenow.sink.transform.ServiceNowTransformer;
 import io.cdap.plugin.servicenow.util.ServiceNowConstants;
-import io.cdap.plugin.servicenow.util.ServiceNowTableInfo;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 
@@ -110,7 +108,4 @@ public class ServiceNowSink extends BatchSink<StructuredRecord, NullWritable, Js
     emitter.emit(new KeyValue<>(null, jsonObject));
   }
 
-  private void recordLineage(BatchSourceContext context, ServiceNowTableInfo tableInfo) {
-
-  }
 }
