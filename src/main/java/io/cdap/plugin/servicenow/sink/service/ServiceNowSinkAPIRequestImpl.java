@@ -107,6 +107,12 @@ public class ServiceNowSinkAPIRequestImpl {
     return restRequest;
   }
 
+  /**
+   * Inserts/Updates the list of records into ServiceNow table
+   *
+   * @param records The list of rest Requests
+   * @return true if the apiResponse code is 200 otherwise false
+   */
   public Boolean createPostRequest(List<RestRequest> records) {
     ServiceNowBatchRequest payloadRequest = getPayloadRequest(records);
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
@@ -173,7 +179,13 @@ public class ServiceNowSinkAPIRequestImpl {
 
     return payloadRequest;
   }
-
+  
+  /**
+   * Retry the unserviced requests     .
+   *
+   * @param records The list of rest Requests
+   * @param unservicedRequestsArray An array of unserviced requests
+   */
   private void retryUnservicedRequests(List<RestRequest> records, JsonArray unservicedRequestsArray)
     throws InterruptedException {
     List<RestRequest> unservicedRequests = new ArrayList<>();

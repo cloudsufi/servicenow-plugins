@@ -66,8 +66,8 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
   }
 
   @Override
-  public void close(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
-    //call payload request
+  public void close(TaskAttemptContext taskAttemptContext) {
+    //create POST request for remaining requests
     if (!restRequests.isEmpty()) {
       servicenowSinkAPIImpl.createPostRequest(restRequests);
     }
