@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.servicenow.sink;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
@@ -267,7 +268,8 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
    * @param providedSchema schema provided in the configuration
    * @param checkNullable if true, checks for nullability of fields in schema are triggered.
    */
-  private void checkCompatibility(Schema actualSchema, Schema providedSchema, boolean checkNullable) {
+  @VisibleForTesting
+  void checkCompatibility(Schema actualSchema, Schema providedSchema, boolean checkNullable) {
     for (Schema.Field providedField : Objects.requireNonNull(providedSchema.getFields())) {
       Schema.Field actualField = actualSchema.getField(providedField.getName(), true);
       if (actualField == null) {
