@@ -16,7 +16,6 @@
 package io.cdap.plugin.servicenow.sink.transform;
 
 import com.google.gson.JsonObject;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.format.UnexpectedFormatException;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -24,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
+import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -32,7 +31,6 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -44,7 +42,7 @@ import javax.annotation.Nullable;
  */
 public class ServiceNowTransformer {
   private static final Logger LOG = LoggerFactory.getLogger(ServiceNowTransformer.class);
-  private static final int DEFAULT_SCALE = 8;
+  private static final int DEFAULT_SCALE = 2;
   private static final String DATE_PATTERN = "yyyy-MM-dd";
   private static final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss";
 
@@ -105,7 +103,7 @@ public class ServiceNowTransformer {
           return dateTimeFormat.format(dateTime);
         case DECIMAL:
           return new BigDecimal(String.valueOf(value)).setScale(DEFAULT_SCALE,
-                                                                BigDecimal.ROUND_HALF_UP);
+                                                                RoundingMode.HALF_UP);
         default:
           throw new UnexpectedFormatException(String.format("Field '%s' is of unsupported type '%s'", fieldName,
                                                             fieldLogicalType.name().toLowerCase()));
@@ -116,21 +114,15 @@ public class ServiceNowTransformer {
     switch (fieldType) {
       case DOUBLE:
       case FLOAT:
-        return new BigDecimal(String.valueOf(value)).setScale(DEFAULT_SCALE, BigDecimal.ROUND_HALF_UP);
+        return new BigDecimal(String.valueOf(value)).setScale(DEFAULT_SCALE, RoundingMode.HALF_UP);
       case BOOLEAN:
-        return (Boolean) value;
+        return value;
       case INT:
-        return (Integer) value;
-      case BYTES:
-        byte[] bytes = value instanceof ByteBuffer ? Bytes.getBytes((ByteBuffer) value) : (byte[]) value;
-        byte[] encoded = Base64.getEncoder().encode(bytes);
-        return new String(encoded);
+        return value;
       case LONG:
         return (int) (long) value;
       case STRING:
-        return (String) value;
-      case MAP:
-        return value.toString();
+        return value;
       default:
         throw new UnexpectedFormatException(String.format("Field '%s' is of unsupported type '%s'", fieldName,
                                                           fieldLogicalType.name().toLowerCase()));

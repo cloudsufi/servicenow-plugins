@@ -15,11 +15,17 @@
  */
 package io.cdap.plugin.servicenow.sink.service;
 
+import com.github.rholder.retry.RetryException;
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
+import com.github.rholder.retry.WaitStrategies;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowTableAPIRequestBuilder;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
@@ -38,12 +44,15 @@ import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.MediaType;
 
 /**
@@ -59,6 +68,8 @@ public class ServiceNowSinkAPIRequestImpl {
   private final ServiceNowSinkConfig config;
   private final ServiceNowTableAPIClientImpl restApi;
   private final Gson gson = new Gson();
+  private final JsonParser jsonParser = new JsonParser();
+  private Boolean isCreated;
 
 
   public ServiceNowSinkAPIRequestImpl(ServiceNowSinkConfig conf) {
@@ -132,26 +143,50 @@ public class ServiceNowSinkAPIRequestImpl {
         LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
         throw new RuntimeException();
       } else {
-        LOG.info("API Response : {} ", apiResponse.getResponseBody());
-        JsonObject responseJSON = new JsonParser().parse(apiResponse.getResponseBody()).getAsJsonObject();
+        JsonObject responseJSON = jsonParser.parse(apiResponse.getResponseBody()).getAsJsonObject();
         JsonArray servicedRequestsArray = responseJSON.get(ServiceNowConstants.SERVICED_REQUESTS).getAsJsonArray();
         for (int i = 0; i < servicedRequestsArray.size(); i++) {
-          if (servicedRequestsArray.get(i).getAsJsonObject().get("status_code").getAsInt() == HttpStatus.SC_FORBIDDEN) {
-            throw new RuntimeException("Permission denied for " + config.getOperation() + " operation");
+          if (servicedRequestsArray.get(i).getAsJsonObject().get(ServiceNowConstants.STATUS_CODE)
+            .getAsInt() == HttpStatus.SC_FORBIDDEN) {
+            String encodedResponseBody = servicedRequestsArray.get(i).getAsJsonObject().get(ServiceNowConstants.BODY)
+              .getAsString();
+            String decodedResponseBody = new String(Base64.getDecoder().decode(encodedResponseBody));
+            String errorDetail = jsonParser.parse(decodedResponseBody).getAsJsonObject().get(ServiceNowConstants.ERROR)
+              .getAsJsonObject().get(ServiceNowConstants.ERROR_DETAIL).getAsString();
+            if (errorDetail.equals(ServiceNowConstants.ACL_EXCEPTION)) {
+              throw new RuntimeException(String.format("Permission denied for '%s' operation.", config.getOperation()));
+            } else {
+              LOG.warn(String.format("'%s' operation failed for '%s'", config.getOperation(), config.getTableName()));
+              LOG.info("Error Response : {} ", decodedResponseBody);
+            }
           }
         }
+
         JsonArray unservicedRequestsArray = responseJSON.get(ServiceNowConstants.UNSERVICED_REQUESTS).getAsJsonArray();
         if (unservicedRequestsArray.size() > 0) {
+          LOG.info("Response status code for last serviced request is {}",
+                   servicedRequestsArray.get(servicedRequestsArray.size() - 1).getAsJsonObject()
+                     .get(ServiceNowConstants.STATUS_CODE).getAsInt());
+          String lastServicedRequestResponseBody = servicedRequestsArray.get(servicedRequestsArray.size() - 1)
+            .getAsJsonObject().get("body").getAsString();
+          LOG.info("Response Body for last serviced request is {}", new String(Base64.getDecoder()
+            .decode(lastServicedRequestResponseBody)));
+          LOG.info("Unserviced Requests : {}", unservicedRequestsArray);
+
           if (retryCounter == 1) {
             throw new RuntimeException("Please decrease the Max Records per Batch while configuring ServiceNow " +
-                                            "Sink Plugin or increase the REST Batch API request timeout property in " +
-                                            "ServiceNow Transaction Quota Rules");
+                                         "Sink Plugin or increase the REST Batch API request timeout property in " +
+                                         "ServiceNow Transaction Quota Rules");
           }
           LOG.info("Optimum Max Records per Batch is {}", (servicedRequestsArray.size() - 1));
           retryUnservicedRequests(records, unservicedRequestsArray);
         }
       }
-    } catch (OAuthSystemException | OAuthProblemException | UnsupportedEncodingException | InterruptedException e) {
+    } catch (IOException e) {
+      LOG.error("Unreliable connection or an could not complete the inability the execution of HTTP POST " +
+                  "within the given time constraint (socket timeout)", e.getMessage());
+      throw new RetryableException();
+    } catch (OAuthSystemException | OAuthProblemException | InterruptedException e) {
       LOG.error("Error in creating a new record", e);
       throw new RuntimeException("Error in creating a new record");
     }
@@ -165,7 +200,7 @@ public class ServiceNowSinkAPIRequestImpl {
   private String getErrorMessage(String responseBody) {
     try {
       JsonObject jo = gson.fromJson(responseBody, JsonObject.class);
-      return jo.getAsJsonObject("error").get("message").getAsString();
+      return jo.getAsJsonObject(ServiceNowConstants.ERROR).get(ServiceNowConstants.MESSAGE).getAsString();
     } catch (Exception e) {
       return e.getMessage();
     }
@@ -196,12 +231,41 @@ public class ServiceNowSinkAPIRequestImpl {
     Collections.sort(unservicedRequestsIds);
     int start = unservicedRequestsIds.get(0);
     int end = unservicedRequestsIds.get(unservicedRequestsIds.size() - 1);
-    // i = start-1 because request just prior to unserviced request fail due to maximum execution time getting exceeded
+    // i = start-1 because request just prior to the unserviced request fails due to maximum execution time exceeded
     for (int i = start - 1; i <= end; i++) {
       unservicedRequests.add(records.get(i - 1));
     }
-    LOG.info("Retrying unserviced requests from Request No. {} to {}", (start - 1), end);
+    LOG.info("Retrying last failed serviced request & unserviced requests from Request No. {} to {}", (start - 1), end);
     retryCounter++;
     createPostRequest(unservicedRequests);
+  }
+
+  /**
+   * Retries to insert/update the list of records into ServiceNow table when
+   * RetryableException is thrown          .
+   *
+   * @param records The list of rest Requests
+   *
+   * @return true if records are created, false otherwise
+   */
+  public Boolean createPostRequestRetryableMode(List<RestRequest> records) throws ExecutionException, RetryException {
+    Callable<Boolean> fetchRecords = () -> {
+      isCreated = createPostRequest(records);
+      return true;
+    };
+
+    Retryer<Boolean> retryer = RetryerBuilder.<Boolean>newBuilder()
+      .retryIfExceptionOfType(RetryableException.class)
+      .withWaitStrategy(WaitStrategies.exponentialWait(ServiceNowConstants.BASE_DELAY, TimeUnit.MILLISECONDS))
+      .withStopStrategy(StopStrategies.stopAfterAttempt(ServiceNowConstants.MAX_NUMBER_OF_RETRY_ATTEMPTS))
+      .build();
+
+    try {
+      retryer.call(fetchRecords);
+    } catch (RetryException | ExecutionException e) {
+      throw e;
+    }
+
+    return isCreated;
   }
 }

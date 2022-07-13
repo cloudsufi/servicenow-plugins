@@ -60,9 +60,9 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
 
   @Name(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH)
   @Macro
-  @Description("No. of requests that will be sent to ServiceNow Batch API as a payload. Default value is 200. Rest " +
+  @Description("No. of requests that will be sent to ServiceNow Batch API as a payload. Default value is 50. Rest " +
     "API property in Transaction quota section \"REST Batch API request timeout\" should be increased to use higher " +
-    "records in a batch. By default this property has a value of 30 sec which can handle approximately 200 records " +
+    "records in a batch. By default this property has a value of 30 sec which can handle approximately 50 records " +
     "in a batch. To use a bigger batch size, set it to a higher value. ")
   private Long maxRecordsPerBatch;
 
@@ -127,8 +127,8 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
     }
 
     if (!containsMacro(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH) && (getMaxRecordsPerBatch() > 500
-      || getMaxRecordsPerBatch() < 100)) {
-      collector.addFailure("Max records per batch must not be greater than 500 or less than 100.",
+      || getMaxRecordsPerBatch() < 50)) {
+      collector.addFailure("Max records per batch must not be greater than 500 or less than 50.",
                            null).withConfigProperty(ServiceNowConstants.PROPERTY_MAX_RECORDS_PER_BATCH);
     }
   }

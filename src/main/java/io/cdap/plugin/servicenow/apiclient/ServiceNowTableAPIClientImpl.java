@@ -39,6 +39,7 @@ import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -123,7 +124,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
    * @param tableName ServiceNow Table name
    * @param entity Details of the Record to be created
    */
-  public void createRecord(String tableName, HttpEntity entity) {
+  public void createRecord(String tableName, HttpEntity entity) throws IOException {
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
       this.conf.getRestApiEndpoint(), tableName);
 

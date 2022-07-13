@@ -157,9 +157,19 @@ public interface ServiceNowConstants {
   String ERROR = "error";
 
   /**
+   * The error detail.
+   */
+  String ERROR_DETAIL = "detail";
+
+  /**
    * The maximum execution time exceeded error.
    */
   String MAXIMUM_EXECUTION_TIME_EXCEEDED = "maximum execution time exceeded";
+
+  /**
+   * The ACL Exception Failed error.
+   */
+  String ACL_EXCEPTION = "ACL Exception Insert Failed due to security constraints";
 
   /**
    * The wait time for API retry in milliseconds.
@@ -207,6 +217,16 @@ public interface ServiceNowConstants {
   String SYS_ID = "sys_id";
 
   /**
+   * The response body
+   */
+  String BODY = "body";
+
+  /**
+   * The response status code
+   */
+  String STATUS_CODE = "status_code";
+
+  /**
    * The serviced requests
    */
   String SERVICED_REQUESTS = "serviced_requests";
@@ -215,5 +235,11 @@ public interface ServiceNowConstants {
    * The unserviced requests
    */
   String UNSERVICED_REQUESTS = "unserviced_requests";
-  
+
+  /**
+   * The initial wait time for HTTP POST API retry in milliseconds.
+   */
+  int BASE_DELAY = 5000;
+
+
 }

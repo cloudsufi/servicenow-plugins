@@ -15,6 +15,7 @@
  */
 package io.cdap.plugin.servicenow.sink.transform;
 
+import com.github.rholder.retry.RetryException;
 import com.google.gson.JsonObject;
 import io.cdap.plugin.servicenow.sink.ServiceNowSinkConfig;
 import io.cdap.plugin.servicenow.sink.model.RestRequest;
@@ -25,9 +26,9 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  *  ServiceNow Record Writer class to insert/update records
@@ -51,13 +52,12 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
     restRequests.add(restRequest);
     if (restRequests.size() == config.getMaxRecordsPerBatch()) {
       LOG.info("Max Records per batch : {} ", config.getMaxRecordsPerBatch());
-      Boolean isBatchCreated;
+      boolean isBatchCreated;
       try {
-        isBatchCreated = servicenowSinkAPIImpl.createPostRequest(restRequests);
-      } catch (RuntimeException exception) {
-        LOG.error(exception.getMessage());
+        isBatchCreated = servicenowSinkAPIImpl.createPostRequestRetryableMode(restRequests);
+      } catch (RetryException | ExecutionException exception) {
         restRequests.clear();
-        throw exception;
+        throw new RuntimeException(exception.getCause().getMessage());
       }
       if (isBatchCreated) {
         restRequests.clear();
@@ -69,7 +69,11 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
   public void close(TaskAttemptContext taskAttemptContext) {
     //create POST request for remaining requests
     if (!restRequests.isEmpty()) {
-      servicenowSinkAPIImpl.createPostRequest(restRequests);
+      try {
+        servicenowSinkAPIImpl.createPostRequestRetryableMode(restRequests);
+      } catch (RetryException | ExecutionException exception) {
+        throw new RuntimeException(exception.getCause().getMessage());
+      }
     }
 
   }

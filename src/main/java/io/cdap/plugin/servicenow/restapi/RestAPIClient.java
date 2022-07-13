@@ -16,9 +16,12 @@
 
 package io.cdap.plugin.servicenow.restapi;
 
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.oltu.oauth2.client.OAuthClient;
@@ -30,6 +33,7 @@ import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -64,16 +68,18 @@ public abstract class RestAPIClient {
    * @param request the Rest API request
    * @return an instance of RestAPIResponse object.
    */
-  public RestAPIResponse executePost(RestAPIRequest request) throws UnsupportedEncodingException {
+  public RestAPIResponse executePost(RestAPIRequest request) throws IOException {
     HttpPost httpPost = new HttpPost(request.getUrl());
     request.getHeaders().entrySet().forEach(e -> httpPost.addHeader(e.getKey(), e.getValue()));
     httpPost.setEntity(request.getEntity());
-    RestAPIResponse apiResponse = null;
+    RestAPIResponse apiResponse;
 
     try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
       try (CloseableHttpResponse httpResponse = httpClient.execute(httpPost)) {
         apiResponse = RestAPIResponse.parse(httpResponse, request.getResponseHeaders());
       }
+    } catch (IOException e) {
+      throw e;
     } catch (Exception e) {
       apiResponse = RestAPIResponse.defaultErrorResponse(e.getMessage());
     }
