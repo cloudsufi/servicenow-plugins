@@ -51,7 +51,6 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
     RestRequest restRequest = servicenowSinkAPIImpl.getRestRequest(jsonObject);
     restRequests.add(restRequest);
     if (restRequests.size() == config.getMaxRecordsPerBatch()) {
-      LOG.info("Max Records per batch : {} ", config.getMaxRecordsPerBatch());
       boolean isBatchCreated;
       try {
         isBatchCreated = servicenowSinkAPIImpl.createPostRequestRetryableMode(restRequests);
@@ -61,6 +60,9 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
       }
       if (isBatchCreated) {
         restRequests.clear();
+      } else {
+        restRequests.clear();
+        throw new RuntimeException("Batch Creation Failed");
       }
     }
   }

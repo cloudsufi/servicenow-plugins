@@ -69,7 +69,7 @@ public class ServiceNowSinkAPIRequestImpl {
   private final ServiceNowTableAPIClientImpl restApi;
   private final Gson gson = new Gson();
   private final JsonParser jsonParser = new JsonParser();
-  private Boolean isCreated;
+  private boolean isCreated;
 
 
   public ServiceNowSinkAPIRequestImpl(ServiceNowSinkConfig conf) {
@@ -128,7 +128,7 @@ public class ServiceNowSinkAPIRequestImpl {
     ServiceNowBatchRequest payloadRequest = getPayloadRequest(records);
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
       config.getRestApiEndpoint());
-    RestAPIResponse apiResponse;
+    RestAPIResponse apiResponse = null;
 
     try {
       String accessToken = restApi.getAccessToken();
@@ -139,9 +139,8 @@ public class ServiceNowSinkAPIRequestImpl {
       requestBuilder.setEntity(stringEntity);
       apiResponse = restApi.executePost(requestBuilder.build());
 
-      if (!apiResponse.isSuccess()) {
+        if (!apiResponse.isSuccess()) {
         LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
-        throw new RuntimeException();
       } else {
         JsonObject responseJSON = jsonParser.parse(apiResponse.getResponseBody()).getAsJsonObject();
         JsonArray servicedRequestsArray = responseJSON.get(ServiceNowConstants.SERVICED_REQUESTS).getAsJsonArray();
@@ -184,11 +183,13 @@ public class ServiceNowSinkAPIRequestImpl {
       }
     } catch (IOException e) {
       LOG.error("Unreliable connection or an could not complete the inability the execution of HTTP POST " +
-                  "within the given time constraint (socket timeout)", e.getMessage());
+                  "within the given time constraint (socket timeout)", e);
       throw new RetryableException();
-    } catch (OAuthSystemException | OAuthProblemException | InterruptedException e) {
+    } catch (OAuthSystemException e) {
+      LOG.error("Error in fetching access token", e);
+      throw new RetryableException();
+    } catch (OAuthProblemException | InterruptedException e) {
       LOG.error("Error in creating a new record", e);
-      throw new RuntimeException("Error in creating a new record");
     }
     // Reset request counter
     counter = 1;
@@ -248,7 +249,7 @@ public class ServiceNowSinkAPIRequestImpl {
    *
    * @return true if records are created, false otherwise
    */
-  public Boolean createPostRequestRetryableMode(List<RestRequest> records) throws ExecutionException, RetryException {
+  public boolean createPostRequestRetryableMode(List<RestRequest> records) throws ExecutionException, RetryException {
     Callable<Boolean> fetchRecords = () -> {
       isCreated = createPostRequest(records);
       return true;
