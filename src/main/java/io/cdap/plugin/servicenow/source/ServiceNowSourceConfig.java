@@ -24,7 +24,6 @@ import io.cdap.plugin.servicenow.util.ServiceNowConstants;
 import io.cdap.plugin.servicenow.util.SourceApplication;
 import io.cdap.plugin.servicenow.util.SourceQueryMode;
 import io.cdap.plugin.servicenow.util.Util;
-
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -57,8 +56,6 @@ public class ServiceNowSourceConfig extends ServiceNowBaseSourceConfig {
   @Description("The name of the ServiceNow table from which data to be fetched. Note, the Table name value " +
     "will be ignored if the Mode is set to `Reporting`.")
   private String tableName;
-
-
   /**
    * Constructor for ServiceNowSourceConfig object.
    *
