@@ -23,7 +23,6 @@ import io.cdap.plugin.servicenow.apiclient.ServiceNowTableDataResponse;
 import io.cdap.plugin.servicenow.util.SchemaBuilder;
 import io.cdap.plugin.servicenow.util.ServiceNowConstants;
 import io.cdap.plugin.servicenow.util.SourceQueryMode;
-import io.cdap.plugin.servicenow.util.SourceValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +88,7 @@ public class ServiceNowRecordReader extends ServiceNowBaseRecordReader {
     tableName = split.getTableName();
     tableNameField = pluginConf.getTableNameField();
 
-    ServiceNowTableAPIClientImpl restApi = new ServiceNowTableAPIClientImpl(pluginConf);
+    ServiceNowTableAPIClientImpl restApi = new ServiceNowTableAPIClientImpl(pluginConf.getConnection());
 
     // Get the table data
     results = restApi.fetchTableRecordsRetryableMode(tableName, pluginConf.getValueType(), pluginConf.getStartDate(),

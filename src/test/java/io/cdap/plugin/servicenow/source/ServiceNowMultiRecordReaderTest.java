@@ -50,30 +50,31 @@ public class ServiceNowMultiRecordReaderTest {
 
   @Before
   public void initializeTests() {
-      serviceNowMultiSourceConfig = Mockito.spy(new ServiceNowSourceConfigHelper.ConfigBuilder()
-              .setReferenceName("referenceName")
-              .setRestApiEndpoint(REST_API_ENDPOINT)
-              .setUser(USER)
-              .setPassword(PASSWORD)
-              .setClientId(CLIENT_ID)
-              .setClientSecret(CLIENT_SECRET)
-              .setTableNames("sys_user")
-              .setValueType("Actual")
-              .setStartDate("2021-01-01")
-              .setEndDate("2022-02-18")
-              .setTableNameField("tablename")
-              .buildMultiSource());
+    serviceNowMultiSourceConfig = Mockito.spy(new ServiceNowSourceConfigHelper.ConfigBuilder()
+                                                .setReferenceName("referenceName")
+                                                .setRestApiEndpoint(REST_API_ENDPOINT)
+                                                .setUser(USER)
+                                                .setPassword(PASSWORD)
+                                                .setClientId(CLIENT_ID)
+                                                .setClientSecret(CLIENT_SECRET)
+                                                .setTableNames("sys_user")
+                                                .setValueType("Actual")
+                                                .setStartDate("2021-01-01")
+                                                .setEndDate("2022-02-18")
+                                                .setTableNameField("tablename")
+                                                .buildMultiSource());
 
-      serviceNowMultiRecordReader = Mockito.spy(new ServiceNowMultiRecordReader(serviceNowMultiSourceConfig));
+    serviceNowMultiRecordReader = Mockito.spy(new ServiceNowMultiRecordReader(serviceNowMultiSourceConfig));
   }
 
   @Test
   public void testConstructor() throws IOException {
     Assert.assertEquals("tablename", serviceNowMultiSourceConfig.getTableNameField());
-    Assert.assertEquals("user", serviceNowMultiSourceConfig.getUser());
+    Assert.assertEquals("user", serviceNowMultiSourceConfig.getConnection().getUser());
     Assert.assertEquals("sys_user", serviceNowMultiSourceConfig.getTableNames());
     Assert.assertEquals("2021-01-01", serviceNowMultiSourceConfig.getStartDate());
-    Assert.assertEquals("https://ven05127.service-now.com", serviceNowMultiSourceConfig.getRestApiEndpoint());
+    Assert.assertEquals("https://ven05127.service-now.com", serviceNowMultiSourceConfig.getConnection()
+      .getRestApiEndpoint());
     Assert.assertEquals("referenceName", serviceNowMultiSourceConfig.getReferenceName());
     Assert.assertEquals("2022-02-18", serviceNowMultiSourceConfig.getEndDate());
     PluginProperties properties = serviceNowMultiSourceConfig.getProperties();
@@ -92,7 +93,7 @@ public class ServiceNowMultiRecordReaderTest {
   public void testConvertToValueInvalidRecord() {
     Schema fieldSchema = Schema.of(Schema.Type.BOOLEAN);
     Assert.assertEquals(Boolean.FALSE, serviceNowMultiRecordReader.convertToValue("Field Name", fieldSchema,
-      new HashMap<>(1)));
+                                                                                  new HashMap<>(1)));
   }
 
   @Test
@@ -182,8 +183,9 @@ public class ServiceNowMultiRecordReaderTest {
     map.put("sys_created_on", "2019-04-05 21:09:12");
     results.add(map);
     restApi.fetchTableRecords(tableName, serviceNowMultiSourceConfig.getValueType(),
-      serviceNowMultiSourceConfig.getStartDate(), serviceNowMultiSourceConfig.getEndDate(), split.getOffset(),
-      ServiceNowConstants.PAGE_SIZE);
+                              serviceNowMultiSourceConfig.getStartDate(), serviceNowMultiSourceConfig.getEndDate(),
+                              split.getOffset(),
+                              ServiceNowConstants.PAGE_SIZE);
 
     ServiceNowTableDataResponse response = new ServiceNowTableDataResponse();
     response.setResult(results);

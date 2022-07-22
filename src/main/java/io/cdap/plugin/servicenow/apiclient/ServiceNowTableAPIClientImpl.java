@@ -26,7 +26,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import io.cdap.plugin.servicenow.ServiceNowBaseConfig;
+import io.cdap.plugin.servicenow.connector.ServiceNowConnectorConfig;
 import io.cdap.plugin.servicenow.restapi.RestAPIClient;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.util.ServiceNowColumn;
@@ -59,15 +59,16 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
   private static final String FIELD_CREATED_ON = "sys_created_on";
   private static final String FIELD_UPDATED_ON = "sys_updated_on";
   private static final String OAUTH_URL_TEMPLATE = "%s/oauth_token.do";
-  private ServiceNowBaseConfig conf;
-  
-  public ServiceNowTableAPIClientImpl(ServiceNowBaseConfig conf) {
+  private final ServiceNowConnectorConfig conf;
+
+  public ServiceNowTableAPIClientImpl(ServiceNowConnectorConfig conf) {
     this.conf = conf;
   }
-  
+
   public String getAccessToken() throws OAuthSystemException, OAuthProblemException {
-    return generateAccessToken(String.format(OAUTH_URL_TEMPLATE, conf.getRestApiEndpoint()), conf.getClientId(),
-      conf.getClientSecret(), conf.getUser(), conf.getPassword());
+    return generateAccessToken(String.format(OAUTH_URL_TEMPLATE, conf.getRestApiEndpoint()),
+                               conf.getClientId(),
+                               conf.getClientSecret(), conf.getUser(), conf.getPassword());
   }
 
   /**
@@ -76,15 +77,15 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
    * @param tableName The ServiceNow table name
    * @param valueType The value type
    * @param startDate The start date
-   * @param endDate The end date
-   * @param offset The number of records to skip
-   * @param limit The number of records to be fetched
+   * @param endDate   The end date
+   * @param offset    The number of records to skip
+   * @param limit     The number of records to be fetched
    * @return The list of Map; each Map representing a table row
    */
   public List<Map<String, Object>> fetchTableRecords(String tableName, SourceValueType valueType, String startDate,
                                                      String endDate, int offset, int limit) {
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
-      this.conf.getRestApiEndpoint(), tableName)
+      conf.getRestApiEndpoint(), tableName)
       .setExcludeReferenceLink(true)
       .setDisplayValue(valueType)
       .setLimit(limit);
@@ -121,11 +122,11 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
    * Create a new record in the ServiceNow Table
    *
    * @param tableName ServiceNow Table name
-   * @param entity Details of the Record to be created
+   * @param entity    Details of the Record to be created
    */
   public void createRecord(String tableName, HttpEntity entity) {
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
-      this.conf.getRestApiEndpoint(), tableName);
+      conf.getRestApiEndpoint(), tableName);
 
     RestAPIResponse apiResponse = null;
 
@@ -139,7 +140,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
       if (!apiResponse.isSuccess()) {
         LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
       } else {
-        LOG.info(apiResponse.getResponseBody().toString());
+        LOG.info(apiResponse.getResponseBody());
       }
     } catch (OAuthSystemException | OAuthProblemException | UnsupportedEncodingException e) {
       LOG.error("Error in creating a new record", e);
@@ -150,10 +151,10 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
   /**
    * Fetches the table schema for ServiceNow table.
    *
-   * @param tableName The ServiceNow table name
-   * @param valueType The value type
-   * @param startDate The start date
-   * @param endDate The end date
+   * @param tableName        The ServiceNow table name
+   * @param valueType        The value type
+   * @param startDate        The start date
+   * @param endDate          The end date
    * @param fetchRecordCount A flag that decides whether to fetch total record count or not
    * @return
    */
@@ -166,7 +167,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
                                                                        String startDate, String endDate,
                                                                        boolean fetchRecordCount) {
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
-      this.conf.getRestApiEndpoint(), tableName)
+      conf.getRestApiEndpoint(), tableName)
       .setExcludeReferenceLink(true)
       .setDisplayValue(valueType)
       .setLimit(1);
@@ -271,9 +272,9 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
    * @param tableName The ServiceNow table name
    * @param valueType The value type
    * @param startDate The start date
-   * @param endDate The end date
-   * @param offset The number of records to skip
-   * @param limit The number of records to be fetched
+   * @param endDate   The end date
+   * @param offset    The number of records to skip
+   * @param limit     The number of records to be fetched
    * @return The list of Map; each Map representing a table row
    */
   public List<Map<String, Object>> fetchTableRecordsRetryableMode(String tableName, SourceValueType valueType,
@@ -295,7 +296,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
       retryer.call(fetchRecords);
     } catch (RetryException | ExecutionException e) {
       LOG.error("Data Recovery failed for batch {} to {}.", offset,
-               (offset + limit));
+                (offset + limit));
     }
 
     return results;

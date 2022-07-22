@@ -215,7 +215,7 @@ public class ServiceNowSinkConfig extends ServiceNowBaseConfig {
 
   private ServiceNowTableInfo getTableMetaData(String tableName, ServiceNowSinkConfig conf) {
     // Call API to fetch first record from the table
-    ServiceNowTableAPIClientImpl restApi = new ServiceNowTableAPIClientImpl(conf);
+    ServiceNowTableAPIClientImpl restApi = new ServiceNowTableAPIClientImpl(conf.getConnection());
     ServiceNowTableDataResponse response = restApi.fetchTableSchema(tableName, SourceValueType.SHOW_DISPLAY_VALUE,
       null, null, true);
     if (response == null) {

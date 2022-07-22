@@ -32,6 +32,7 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.SourceInputFormatProvider;
+import io.cdap.plugin.servicenow.connector.ServiceNowConnectorConfig;
 import io.cdap.plugin.servicenow.util.ServiceNowConstants;
 import io.cdap.plugin.servicenow.util.ServiceNowTableInfo;
 import io.cdap.plugin.servicenow.util.SourceQueryMode;
@@ -63,6 +64,7 @@ public class ServiceNowSource extends BatchSource<NullWritable, StructuredRecord
     this.conf = conf;
   }
 
+
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
@@ -76,7 +78,13 @@ public class ServiceNowSource extends BatchSource<NullWritable, StructuredRecord
     // This is to avoid adding same validation errors again in getSchema method call
     collector.getOrThrowException();
     if (conf.shouldGetSchema() && conf.getQueryMode() == SourceQueryMode.TABLE) {
-      List<ServiceNowTableInfo> tableInfo = ServiceNowInputFormat.fetchTableInfo(conf.getQueryMode(collector), conf);
+      List<ServiceNowTableInfo> tableInfo = ServiceNowInputFormat.fetchTableInfo(conf.getQueryMode(collector),
+                                                                                 conf.getConnection(),
+                                                                                 conf.getTableName(),
+                                                                                 conf.getApplicationName(),
+                                                                                 conf.getValueType(),
+                                                                                 conf.getStartDate(),
+                                                                                 conf.getEndDate());
       stageConfigurer.setOutputSchema(tableInfo.stream().findFirst().get().getSchema());
     } else if (conf.getQueryMode() == SourceQueryMode.REPORTING) {
       stageConfigurer.setOutputSchema(null);

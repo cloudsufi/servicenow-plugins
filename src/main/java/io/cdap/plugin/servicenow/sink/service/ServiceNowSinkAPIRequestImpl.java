@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowTableAPIRequestBuilder;
+import io.cdap.plugin.servicenow.connector.ServiceNowConnectorConfig;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.sink.ServiceNowSinkConfig;
 import io.cdap.plugin.servicenow.sink.model.RestRequest;
@@ -63,7 +64,7 @@ public class ServiceNowSinkAPIRequestImpl {
 
   public ServiceNowSinkAPIRequestImpl(ServiceNowSinkConfig conf) {
     this.config = conf;
-    restApi = new ServiceNowTableAPIClientImpl(config);
+    restApi = new ServiceNowTableAPIClientImpl(config.getConnection());
   }
 
   public RestRequest getRestRequest(JsonObject jsonObject) {
@@ -116,7 +117,7 @@ public class ServiceNowSinkAPIRequestImpl {
   public Boolean createPostRequest(List<RestRequest> records) {
     ServiceNowBatchRequest payloadRequest = getPayloadRequest(records);
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
-      config.getRestApiEndpoint());
+      config.getConnection().getRestApiEndpoint());
     RestAPIResponse apiResponse;
 
     try {
