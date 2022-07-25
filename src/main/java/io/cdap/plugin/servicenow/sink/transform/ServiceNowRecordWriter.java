@@ -26,6 +26,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -47,7 +49,7 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
   }
 
   @Override
-  public void write(NullWritable key, JsonObject jsonObject) {
+  public void write(NullWritable key, JsonObject jsonObject) throws UnknownHostException {
     RestRequest restRequest = servicenowSinkAPIImpl.getRestRequest(jsonObject);
     restRequests.add(restRequest);
     if (restRequests.size() == config.getMaxRecordsPerBatch()) {
@@ -56,14 +58,19 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
         isBatchCreated = servicenowSinkAPIImpl.createPostRequestRetryableMode(restRequests);
       } catch (RetryException | ExecutionException exception) {
         restRequests.clear();
+        LOG.info(String.format("Hostname: %s", InetAddress.getLocalHost().getHostName()));
         LOG.info(String.format("Thread ID : %s, Thread name: %s", Thread.currentThread().getId(),
                                Thread.currentThread().getName()));
         throw new RuntimeException(exception.getCause().getMessage());
       }
       if (isBatchCreated) {
         restRequests.clear();
+        LOG.info(String.format("Hostname: %s", InetAddress.getLocalHost().getHostName()));
+        LOG.info(String.format("Thread ID : %s, Thread name: %s", Thread.currentThread().getId(),
+                               Thread.currentThread().getName()));
       } else {
         restRequests.clear();
+        LOG.info(String.format("Hostname: %s", InetAddress.getLocalHost().getHostName()));
         LOG.info(String.format("Thread ID : %s, Thread name: %s", Thread.currentThread().getId(),
                                Thread.currentThread().getName()));
         throw new RuntimeException("Batch Creation Failed");

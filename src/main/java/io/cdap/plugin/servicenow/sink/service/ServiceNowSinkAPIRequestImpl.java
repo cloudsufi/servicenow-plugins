@@ -143,6 +143,7 @@ public class ServiceNowSinkAPIRequestImpl {
         LOG.info(String.format("API Response Code %s for Batch Request id: %s", apiResponse.getHttpStatus(),
                                payloadRequest.getBatchRequestId()));
         LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
+        throw new RetryableException();
       } else {
         JsonObject responseJSON = jsonParser.parse(apiResponse.getResponseBody()).getAsJsonObject();
         JsonArray servicedRequestsArray = responseJSON.get(ServiceNowConstants.SERVICED_REQUESTS).getAsJsonArray();
@@ -183,18 +184,10 @@ public class ServiceNowSinkAPIRequestImpl {
           retryUnservicedRequests(records, unservicedRequestsArray);
         }
       }
-    } catch (IOException e) {
-      LOG.error("Unreliable connection or an could not complete the inability the execution of HTTP POST " +
-                  "within the given time constraint (socket timeout)", e);
+    } catch (IOException | OAuthSystemException e) {
+      LOG.error("Error while connecting to ServiceNow", e.getMessage());
       throw new RetryableException();
-    } catch (OAuthSystemException e) {
-      LOG.error("Error in fetching access token", e);
-      throw new RetryableException();
-    } catch (OAuthProblemException | InterruptedException e) {
-      LOG.error("Error in creating a new record", e);
-      throw e;
     } catch (Exception e) {
-      LOG.error("Exception while creating post request");
       throw e;
     }
     // Reset request counter
@@ -263,15 +256,11 @@ public class ServiceNowSinkAPIRequestImpl {
 
     Retryer<Boolean> retryer = RetryerBuilder.<Boolean>newBuilder()
       .retryIfExceptionOfType(RetryableException.class)
-      .withWaitStrategy(WaitStrategies.exponentialWait(ServiceNowConstants.BASE_DELAY, TimeUnit.MILLISECONDS))
+      .withWaitStrategy(WaitStrategies.fixedWait(ServiceNowConstants.BASE_DELAY, TimeUnit.MILLISECONDS))
       .withStopStrategy(StopStrategies.stopAfterAttempt(ServiceNowConstants.MAX_NUMBER_OF_RETRY_ATTEMPTS))
       .build();
 
-    try {
       retryer.call(fetchRecords);
-    } catch (RetryException | ExecutionException e) {
-      throw e;
-    }
 
     return isCreated;
   }

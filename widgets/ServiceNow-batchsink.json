@@ -98,7 +98,7 @@
           }
         },
         {
-          "widget-type": "select",
+          "widget-type": "hidden",
           "label": "Max Records Per Batch",
           "name": "maxRecordsPerBatch",
           "widget-attributes": {
