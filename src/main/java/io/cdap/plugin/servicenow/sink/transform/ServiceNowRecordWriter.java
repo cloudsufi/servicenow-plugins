@@ -56,12 +56,16 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
         isBatchCreated = servicenowSinkAPIImpl.createPostRequestRetryableMode(restRequests);
       } catch (RetryException | ExecutionException exception) {
         restRequests.clear();
+        LOG.info(String.format("Thread ID : %s, Thread name: %s", Thread.currentThread().getId(),
+                               Thread.currentThread().getName()));
         throw new RuntimeException(exception.getCause().getMessage());
       }
       if (isBatchCreated) {
         restRequests.clear();
       } else {
         restRequests.clear();
+        LOG.info(String.format("Thread ID : %s, Thread name: %s", Thread.currentThread().getId(),
+                               Thread.currentThread().getName()));
         throw new RuntimeException("Batch Creation Failed");
       }
     }

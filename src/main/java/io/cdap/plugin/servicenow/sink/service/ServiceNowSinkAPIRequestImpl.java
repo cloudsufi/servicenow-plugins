@@ -124,7 +124,7 @@ public class ServiceNowSinkAPIRequestImpl {
    * @param records The list of rest Requests
    * @return true if the apiResponse code is 200 otherwise false
    */
-  public Boolean createPostRequest(List<RestRequest> records) {
+  public Boolean createPostRequest(List<RestRequest> records) throws OAuthProblemException, InterruptedException {
     ServiceNowBatchRequest payloadRequest = getPayloadRequest(records);
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
       config.getRestApiEndpoint());
@@ -139,7 +139,9 @@ public class ServiceNowSinkAPIRequestImpl {
       requestBuilder.setEntity(stringEntity);
       apiResponse = restApi.executePost(requestBuilder.build());
 
-        if (!apiResponse.isSuccess()) {
+      if (!apiResponse.isSuccess()) {
+        LOG.info(String.format("API Response Code %s for Batch Request id: %s", apiResponse.getHttpStatus(),
+                               payloadRequest.getBatchRequestId()));
         LOG.error("Error - {}", getErrorMessage(apiResponse.getResponseBody()));
       } else {
         JsonObject responseJSON = jsonParser.parse(apiResponse.getResponseBody()).getAsJsonObject();
@@ -190,6 +192,10 @@ public class ServiceNowSinkAPIRequestImpl {
       throw new RetryableException();
     } catch (OAuthProblemException | InterruptedException e) {
       LOG.error("Error in creating a new record", e);
+      throw e;
+    } catch (Exception e) {
+      LOG.error("Exception while creating post request");
+      throw e;
     }
     // Reset request counter
     counter = 1;
@@ -223,7 +229,7 @@ public class ServiceNowSinkAPIRequestImpl {
    * @param unservicedRequestsArray An array of unserviced requests
    */
   private void retryUnservicedRequests(List<RestRequest> records, JsonArray unservicedRequestsArray)
-    throws InterruptedException {
+    throws InterruptedException, OAuthProblemException {
     List<RestRequest> unservicedRequests = new ArrayList<>();
     List<Integer> unservicedRequestsIds = new ArrayList();
     for (int i = 0; i < unservicedRequestsArray.size(); i++) {

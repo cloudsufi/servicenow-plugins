@@ -16,12 +16,10 @@
 
 package io.cdap.plugin.servicenow.restapi;
 
-import org.apache.http.NoHttpResponseException;
+import io.cdap.plugin.servicenow.sink.service.ServiceNowSinkAPIRequestImpl;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.oltu.oauth2.client.OAuthClient;
@@ -32,14 +30,16 @@ import org.apache.oltu.oauth2.common.OAuth;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 /**
  * An abstract class to call Rest API.
  */
 public abstract class RestAPIClient {
+  private static final Logger LOG = LoggerFactory.getLogger(RestAPIClient.class);
   /**
    * Executes the Rest API request and returns the response.
    *
@@ -81,6 +81,7 @@ public abstract class RestAPIClient {
     } catch (IOException e) {
       throw e;
     } catch (Exception e) {
+      LOG.error("Exception while executing post request", e);
       apiResponse = RestAPIResponse.defaultErrorResponse(e.getMessage());
     }
 
