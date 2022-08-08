@@ -61,6 +61,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
   private static final String FIELD_UPDATED_ON = "sys_updated_on";
   private static final String OAUTH_URL_TEMPLATE = "%s/oauth_token.do";
   private ServiceNowBaseConfig conf;
+  private String accessToken;
   
   public ServiceNowTableAPIClientImpl(ServiceNowBaseConfig conf) {
     this.conf = conf;
@@ -69,6 +70,27 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
   public String getAccessToken() throws OAuthSystemException, OAuthProblemException {
     return generateAccessToken(String.format(OAUTH_URL_TEMPLATE, conf.getRestApiEndpoint()), conf.getClientId(),
       conf.getClientSecret(), conf.getUser(), conf.getPassword());
+  }
+
+  /**
+   * Retries to get the access token and returns the same when OAuthSystemException is thrown
+   */
+  public String getAccessTokenRetryableMode() throws ExecutionException, RetryException {
+
+    Callable<Boolean> fetchToken = () -> {
+      accessToken = getAccessToken();
+      return true;
+    };
+
+    Retryer<Boolean> retryer = RetryerBuilder.<Boolean>newBuilder()
+      .retryIfExceptionOfType(OAuthSystemException.class)
+      .withWaitStrategy(WaitStrategies.fixedWait(ServiceNowConstants.BASE_DELAY, TimeUnit.MILLISECONDS))
+      .withStopStrategy(StopStrategies.stopAfterAttempt(ServiceNowConstants.MAX_NUMBER_OF_RETRY_ATTEMPTS))
+      .build();
+
+    retryer.call(fetchToken);
+
+    return accessToken;
   }
 
   /**

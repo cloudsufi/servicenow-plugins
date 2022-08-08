@@ -40,7 +40,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
-import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +63,6 @@ public class ServiceNowSinkAPIRequestImpl {
 
   private static Integer counter = 1;
   private static Integer batchRequestIdCounter = 1;
-  private static Integer retryCounter = 0;
   private final ServiceNowSinkConfig config;
   private final ServiceNowTableAPIClientImpl restApi;
   private final Gson gson = new Gson();
@@ -121,17 +119,20 @@ public class ServiceNowSinkAPIRequestImpl {
   /**
    * Inserts/Updates the list of records into ServiceNow table
    *
-   * @param records The list of rest Requests
+   * @param restRequestList The list of restRequests
+   * @param records The list of records to insert/update
+   * @param accessToken The access token
    * @return true if the apiResponse code is 200 otherwise false
    */
-  public Boolean createPostRequest(List<RestRequest> records) throws OAuthProblemException, InterruptedException {
+  public Boolean createPostRequest(List<RestRequest> restRequestList, List<RestRequest> records, String accessToken)
+    throws OAuthProblemException, InterruptedException {
     ServiceNowBatchRequest payloadRequest = getPayloadRequest(records);
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
       config.getRestApiEndpoint());
-    RestAPIResponse apiResponse = null;
+    RestAPIResponse apiResponse;
 
     try {
-      String accessToken = restApi.getAccessToken();
+      //String accessToken = restApi.getAccessToken();
       requestBuilder.setAuthHeader(accessToken);
       requestBuilder.setAcceptHeader(MediaType.APPLICATION_JSON);
       requestBuilder.setContentTypeHeader(MediaType.APPLICATION_JSON);
@@ -174,26 +175,16 @@ public class ServiceNowSinkAPIRequestImpl {
           LOG.info("Response Body for last serviced request is {}", new String(Base64.getDecoder()
             .decode(lastServicedRequestResponseBody)));
           LOG.info("Unserviced Requests : {}", unservicedRequestsArray);
-
-          if (retryCounter == 1) {
-            throw new RuntimeException("Please decrease the Max Records per Batch while configuring ServiceNow " +
-                                         "Sink Plugin or increase the REST Batch API request timeout property in " +
-                                         "ServiceNow Transaction Quota Rules");
-          }
           LOG.info("Optimum Max Records per Batch is {}", (servicedRequestsArray.size() - 1));
-          retryUnservicedRequests(records, unservicedRequestsArray);
+          retryUnservicedRequests(restRequestList, unservicedRequestsArray, accessToken);
         }
       }
-    } catch (IOException | OAuthSystemException e) {
+    } catch (IOException e) {
       LOG.error("Error while connecting to ServiceNow", e.getMessage());
       throw new RetryableException();
     } catch (Exception e) {
       throw e;
     }
-    // Reset request counter
-    counter = 1;
-    // Reset retry counter
-    retryCounter = 0;
     return apiResponse.getHttpStatus() == HttpStatus.SC_OK;
   }
 
@@ -210,7 +201,6 @@ public class ServiceNowSinkAPIRequestImpl {
     ServiceNowBatchRequest payloadRequest = new ServiceNowBatchRequest();
     payloadRequest.setBatchRequestId(batchRequestIdCounter.toString());
     payloadRequest.setRestRequests(restRequests);
-    batchRequestIdCounter++;
 
     return payloadRequest;
   }
@@ -218,10 +208,12 @@ public class ServiceNowSinkAPIRequestImpl {
   /**
    * Retry the unserviced requests     .
    *
-   * @param records The list of rest Requests
+   * @param restRequestList The list of rest Requests
    * @param unservicedRequestsArray An array of unserviced requests
+   * @param accessToken The access token
    */
-  private void retryUnservicedRequests(List<RestRequest> records, JsonArray unservicedRequestsArray)
+  private void retryUnservicedRequests(List<RestRequest> restRequestList, JsonArray unservicedRequestsArray,
+                                       String accessToken)
     throws InterruptedException, OAuthProblemException {
     List<RestRequest> unservicedRequests = new ArrayList<>();
     List<Integer> unservicedRequestsIds = new ArrayList();
@@ -233,24 +225,25 @@ public class ServiceNowSinkAPIRequestImpl {
     int end = unservicedRequestsIds.get(unservicedRequestsIds.size() - 1);
     // i = start-1 because request just prior to the unserviced request fails due to maximum execution time exceeded
     for (int i = start - 1; i <= end; i++) {
-      unservicedRequests.add(records.get(i - 1));
+      unservicedRequests.add(restRequestList.get(i - 1));
     }
     LOG.info("Retrying last failed serviced request & unserviced requests from Request No. {} to {}", (start - 1), end);
-    retryCounter++;
-    createPostRequest(unservicedRequests);
+    createPostRequest(restRequestList, unservicedRequests, accessToken);
   }
 
   /**
-   * Retries to insert/update the list of records into ServiceNow table when
-   * RetryableException is thrown          .
+   * Retries to insert/update the list of records into ServiceNow table when RetryableException is thrown          .
    *
    * @param records The list of rest Requests
    *
    * @return true if records are created, false otherwise
    */
   public boolean createPostRequestRetryableMode(List<RestRequest> records) throws ExecutionException, RetryException {
+    // Reset request counter
+    counter = 1;
+    String accessToken = restApi.getAccessTokenRetryableMode();
     Callable<Boolean> fetchRecords = () -> {
-      isCreated = createPostRequest(records);
+      isCreated = createPostRequest(records, records, accessToken);
       return true;
     };
 
@@ -260,8 +253,11 @@ public class ServiceNowSinkAPIRequestImpl {
       .withStopStrategy(StopStrategies.stopAfterAttempt(ServiceNowConstants.MAX_NUMBER_OF_RETRY_ATTEMPTS))
       .build();
 
-      retryer.call(fetchRecords);
+    retryer.call(fetchRecords);
 
+    // Set Batch Request counter
+    batchRequestIdCounter++;
+    
     return isCreated;
   }
 }

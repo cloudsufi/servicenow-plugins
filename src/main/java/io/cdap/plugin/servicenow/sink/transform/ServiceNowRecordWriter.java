@@ -26,6 +26,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -41,15 +42,14 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
   private List<RestRequest> restRequests = new ArrayList<>();
   private ServiceNowSinkAPIRequestImpl servicenowSinkAPIImpl;
 
-  private static final Logger LOG = LoggerFactory.getLogger(ServiceNowRecordWriter.class);
-
   public ServiceNowRecordWriter(ServiceNowSinkConfig config) {
     this.config = config;
     servicenowSinkAPIImpl = new ServiceNowSinkAPIRequestImpl(config);
   }
 
   @Override
-  public void write(NullWritable key, JsonObject jsonObject) throws UnknownHostException {
+  public void write(NullWritable key, JsonObject jsonObject) throws IOException {
+
     RestRequest restRequest = servicenowSinkAPIImpl.getRestRequest(jsonObject);
     restRequests.add(restRequest);
     if (restRequests.size() == config.getMaxRecordsPerBatch()) {
@@ -58,34 +58,27 @@ public class ServiceNowRecordWriter extends RecordWriter<NullWritable, JsonObjec
         isBatchCreated = servicenowSinkAPIImpl.createPostRequestRetryableMode(restRequests);
       } catch (RetryException | ExecutionException exception) {
         restRequests.clear();
-        LOG.info(String.format("Hostname: %s", InetAddress.getLocalHost().getHostName()));
-        LOG.info(String.format("Thread ID : %s, Thread name: %s", Thread.currentThread().getId(),
-                               Thread.currentThread().getName()));
-        throw new RuntimeException(exception.getCause().getMessage());
+        //Fail the pipleline
+        throw new IOException(exception.getCause());
       }
-      if (isBatchCreated) {
-        restRequests.clear();
-        LOG.info(String.format("Hostname: %s", InetAddress.getLocalHost().getHostName()));
-        LOG.info(String.format("Thread ID : %s, Thread name: %s", Thread.currentThread().getId(),
-                               Thread.currentThread().getName()));
-      } else {
-        restRequests.clear();
-        LOG.info(String.format("Hostname: %s", InetAddress.getLocalHost().getHostName()));
-        LOG.info(String.format("Thread ID : %s, Thread name: %s", Thread.currentThread().getId(),
-                               Thread.currentThread().getName()));
-        throw new RuntimeException("Batch Creation Failed");
+      restRequests.clear();
+      
+      if (!isBatchCreated) {
+        //Fail the pipleline
+        throw new IOException("Batch Creation Failed");
       }
     }
   }
 
   @Override
-  public void close(TaskAttemptContext taskAttemptContext) {
+  public void close(TaskAttemptContext taskAttemptContext) throws IOException {
     //create POST request for remaining requests
     if (!restRequests.isEmpty()) {
       try {
         servicenowSinkAPIImpl.createPostRequestRetryableMode(restRequests);
       } catch (RetryException | ExecutionException exception) {
-        throw new RuntimeException(exception.getCause().getMessage());
+        //Fail the pipleline
+        throw new IOException(exception.getCause());
       }
     }
 

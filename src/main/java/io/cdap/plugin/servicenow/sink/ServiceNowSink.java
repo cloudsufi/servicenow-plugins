@@ -34,10 +34,13 @@ import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.servicenow.sink.output.ServiceNowOutputFormat;
 import io.cdap.plugin.servicenow.sink.output.ServiceNowOutputFormatProvider;
+import io.cdap.plugin.servicenow.sink.transform.ServiceNowRecordWriter;
 import io.cdap.plugin.servicenow.sink.transform.ServiceNowTransformer;
 import io.cdap.plugin.servicenow.util.ServiceNowConstants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.stream.Collectors;
 
@@ -48,7 +51,7 @@ import java.util.stream.Collectors;
 @Name(ServiceNowConstants.PLUGIN_NAME)
 @Description("Writes to the target table in ServiceNow.")
 public class ServiceNowSink extends BatchSink<StructuredRecord, NullWritable, JsonObject> {
-
+  private static final Logger LOG = LoggerFactory.getLogger(ServiceNowSink.class);
   private final ServiceNowSinkConfig conf;
   private ServiceNowTransformer transformer;
 
