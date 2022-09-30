@@ -168,18 +168,19 @@ public class ServiceNowConnector implements DirectConnector {
       throw new IllegalArgumentException("Path should contain table name.");
     }
     try {
-      return getTableData(table);
+      return getTableData(table, sampleRequest.getLimit());
     } catch (OAuthProblemException | OAuthSystemException e) {
       throw new IOException("Unable to fetch the data.");
     }
   }
 
-  private List<StructuredRecord> getTableData(String tableName) throws OAuthProblemException, OAuthSystemException {
+  private List<StructuredRecord> getTableData(String tableName, int limit) throws OAuthProblemException,
+    OAuthSystemException {
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
       config.getRestApiEndpoint(), tableName, false)
       .setExcludeReferenceLink(true)
       .setDisplayValue(SourceValueType.SHOW_DISPLAY_VALUE)
-      .setLimit(1000);
+      .setLimit(limit);
     RestAPIResponse apiResponse = null;
     ServiceNowTableAPIClientImpl serviceNowTableAPIClient = new ServiceNowTableAPIClientImpl(config);
     String accessToken = serviceNowTableAPIClient.getAccessToken();
