@@ -68,3 +68,39 @@ Feature: ServiceNow Source - Run time scenarios
     And Open and capture logs
     And Verify the pipeline status is "Succeeded"
     And Verify count of no of records transferred to the target BigQuery Table
+
+  @TS-SN-RNTM-03
+  Scenario: Verify user should be able to deploy and run the pipeline using connection manager functionality
+    When Open Datafusion Project to configure pipeline
+    And Select plugin: "ServiceNow" from the plugins list as: "Source"
+    And Navigate to the properties page of plugin: "ServiceNow"
+    And Click plugin property: "switch-useConnection"
+    And Click on the Browse Connections button
+    And Click on the Add Connection button
+    And Click on the ServiceNow Connector button
+    And Enter input plugin property: "name" with value: "ServicenowconnectionTest9"
+    And fill Credentials section for pipeline user
+    Then Click on the Test Connection button
+    And Verify the test connection is successful
+    Then  Click on the Create button
+    And Click on the Servicenowconnection Button
+    And Enter input plugin property: "referenceName" with value: "test"
+    And configure ServiceNow source plugin for table: "CONDITION" in the Table mode
+    Then Validate "ServiceNow" plugin properties
+    And Close the Plugin Properties page
+    And Select Sink plugin: "BigQueryTable" from the plugins list
+    And Connect source as "ServiceNow" and sink as "BigQuery" to establish connection
+    And Navigate to the properties page of plugin: "BigQuery"
+    And Replace input plugin property: "project" with value: "projectId"
+    And Enter input plugin property: "datasetProject" with value: "datasetprojectId"
+    And Replace input plugin property: "serviceFilePath" with value: "file.path"
+    And Enter input plugin property: "table" with value: "table1"
+    And Configure BigQuery sink plugin for Dataset and Table
+    Then Validate "BigQuery" plugin properties
+    And Close the Plugin Properties page
+    And Save and Deploy Pipeline
+    And Run the Pipeline in Runtime
+    And Wait till pipeline is in running state
+    And Open and capture logs
+    And Verify the pipeline status is "Succeeded"
+    And Verify count of no of records transferred to the target BigQuery Table

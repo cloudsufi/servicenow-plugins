@@ -20,53 +20,83 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.How;
 
+import static org.openqa.selenium.support.How.XPATH;
+
 /**
  * ServiceNow batch source - Properties page - Locators.
  */
 public class ServiceNowPropertiesPage {
 
-  @FindBy(how = How.XPATH, using = "//div[contains(@class, 'label-input-container')]//input")
+  @FindBy(how = XPATH, using = "//div[contains(@class, 'label-input-container')]//input")
   public static WebElement labelInput;
 
   // Basic section
-  @FindBy(how = How.XPATH, using = "//input[@data-cy='referenceName']")
+  @FindBy(how = XPATH, using = "//input[@data-cy='referenceName']")
   public static WebElement referenceNameInput;
 
-  @FindBy(how = How.XPATH, using = "//div[@data-cy='select-queryMode']")
+  @FindBy(how = XPATH, using = "//div[@data-cy='select-queryMode']")
   public static WebElement modeDropdown;
 
   // Reporting Mode section
-  @FindBy(how = How.XPATH, using = "//div[@data-cy='select-applicationName']")
+  @FindBy(how = XPATH, using = "//div[@data-cy='select-applicationName']")
   public static WebElement applicationNameDropdown;
 
-  @FindBy(how = How.XPATH, using = "//input[@data-cy='tableNameField']")
+  @FindBy(how = XPATH, using = "//input[@data-cy='tableNameField']")
   public static WebElement tableNameFieldInput;
 
   // Table Mode section
-  @FindBy(how = How.XPATH, using = "//input[@data-cy='tableName']")
+  @FindBy(how = XPATH, using = "//input[@data-cy='tableName']")
   public static WebElement tableNameInput;
 
   // Credentials section
-  @FindBy(how = How.XPATH, using = "//input[@data-cy='clientId']")
+  @FindBy(how = XPATH, using = "//input[@data-cy='clientId']")
   public static WebElement clientIdInput;
 
-  @FindBy(how = How.XPATH, using = "//input[@data-cy='clientSecret']")
+  @FindBy(how = XPATH, using = "//input[@data-cy='clientSecret']")
   public static WebElement clientSecretInput;
 
-  @FindBy(how = How.XPATH, using = "//input[@data-cy='restApiEndpoint']")
+  @FindBy(how = XPATH, using = "//input[@data-cy='restApiEndpoint']")
   public static WebElement restApiEndpointInput;
 
-  @FindBy(how = How.XPATH, using = "//input[@data-cy='user']")
+  @FindBy(how = XPATH, using = "//input[@data-cy='user']")
   public static WebElement usernameInput;
 
-  @FindBy(how = How.XPATH, using = "//input[@data-cy='password']")
+  @FindBy(how = XPATH, using = "//input[@data-cy='password']")
   public static WebElement passwordInput;
 
   // Advanced section
-  @FindBy(how = How.XPATH, using = "//div[@data-cy='select-valueType']")
+  @FindBy(how = XPATH, using = "//div[@data-cy='select-valueType']")
   public static WebElement typeOfValuesDropdown;
 
-  @FindBy(how = How.XPATH, using = "//div[@data-cy='schema-fields-list']" +
-    "//*[local-name()='svg' and @data-cy='error-icon']")
+  @FindBy(how = XPATH, using = "//div[@data-cy='schema-fields-list']" +
+          "//*[local-name()='svg' and @data-cy='error-icon']")
   public static WebElement fieldNotCreatableError;
+
+
+  // Connection Manager
+  @FindBy(how = XPATH, using = "//input[@data-cy='toggle-NO']")
+  public static WebElement verifyPluginPropertyToggleState;
+
+
+
+  // addConnection
+  @FindBy(how= XPATH, using ="//*[contains(text(),'Add Connection')]" )
+  public static WebElement addConnectionButton;
+
+  @FindBy(how = XPATH, using = "//div[@data-cy='connector-ServiceNow']")
+  public static WebElement connectorServiceNow;
+
+  @FindBy(how = XPATH, using = "//button[@data-cy='connection-test-button']")
+  public static WebElement connectionTestButton;
+
+  @FindBy(how = XPATH, using = "//button[@data-cy='connection-submit-button']")
+  public static WebElement createButton;
+
+  @FindBy(how= XPATH, using ="//*[contains(text(),'ServicenowconnectionTest8')]" )
+  public static WebElement ServicenowConnectionButton;
+
+  @FindBy(how = XPATH, using = "//button[@data-cy='connection']")
+  public static WebElement connection;
+
+
 }

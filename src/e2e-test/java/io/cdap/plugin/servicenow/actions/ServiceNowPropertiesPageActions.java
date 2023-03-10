@@ -16,7 +16,9 @@
 
 package io.cdap.plugin.servicenow.actions;
 
+import io.cdap.e2e.pages.locators.CdfConnectionLocators;
 import io.cdap.e2e.pages.locators.CdfPluginPropertiesLocators;
+import io.cdap.e2e.utils.AssertionHelper;
 import io.cdap.e2e.utils.ElementHelper;
 import io.cdap.e2e.utils.PluginPropertyUtils;
 import io.cdap.e2e.utils.SeleniumHelper;
@@ -31,6 +33,8 @@ import org.apache.commons.lang3.RandomStringUtils;
  */
 public class ServiceNowPropertiesPageActions {
 
+  public static Object clickaddConnectionButton;
+
   static {
     SeleniumHelper.getPropertiesLocators(ServiceNowPropertiesPage.class);
   }
@@ -41,13 +45,13 @@ public class ServiceNowPropertiesPageActions {
 
   public static void selectMode(PluginMode mode) {
     ElementHelper.selectDropdownOption(
-      ServiceNowPropertiesPage.modeDropdown, CdfPluginPropertiesLocators.locateDropdownListItem(mode.value));
+            ServiceNowPropertiesPage.modeDropdown, CdfPluginPropertiesLocators.locateDropdownListItem(mode.value));
   }
 
   public static void selectApplicationName(ApplicationInReportingMode applicationName) {
     ElementHelper.selectDropdownOption(
-      ServiceNowPropertiesPage.applicationNameDropdown,
-      CdfPluginPropertiesLocators.locateDropdownListItem(applicationName.value));
+            ServiceNowPropertiesPage.applicationNameDropdown,
+            CdfPluginPropertiesLocators.locateDropdownListItem(applicationName.value));
   }
 
   public static void fillTableNameFieldPropertyInReportingMode(String tableName) {
@@ -69,27 +73,27 @@ public class ServiceNowPropertiesPageActions {
 
   public static void fillCredentialsSectionForPipelineUser() {
     ServiceNowPropertiesPageActions.fillCredentialsSectionProperties(
-      System.getenv("SERVICE_NOW_CLIENT_ID"),
-      System.getenv("SERVICE_NOW_CLIENT_SECRET"),
-      System.getenv("SERVICE_NOW_REST_API_ENDPOINT"),
-      System.getenv("SERVICE_NOW_USERNAME"),
-      System.getenv("SERVICE_NOW_PASSWORD")
+            System.getenv("SERVICE_NOW_CLIENT_ID"),
+            System.getenv("SERVICE_NOW_CLIENT_SECRET"),
+            System.getenv("SERVICE_NOW_REST_API_ENDPOINT"),
+            System.getenv("SERVICE_NOW_USERNAME"),
+            System.getenv("SERVICE_NOW_PASSWORD")
     );
   }
 
   public static void fillCredentialsSectionWithInvalidCredentials() {
     ServiceNowPropertiesPageActions.fillCredentialsSectionProperties(
-      PluginPropertyUtils.pluginProp("invalid.client.id"),
-      PluginPropertyUtils.pluginProp("invalid.client.secret"),
-      PluginPropertyUtils.pluginProp("invalid.rest.api.endpoint"),
-      PluginPropertyUtils.pluginProp("invalid.pipeline.user.username"),
-      PluginPropertyUtils.pluginProp("invalid.pipeline.user.password")
+            PluginPropertyUtils.pluginProp("invalid.client.id"),
+            PluginPropertyUtils.pluginProp("invalid.client.secret"),
+            PluginPropertyUtils.pluginProp("invalid.rest.api.endpoint"),
+            PluginPropertyUtils.pluginProp("invalid.pipeline.user.username"),
+            PluginPropertyUtils.pluginProp("invalid.pipeline.user.password")
     );
   }
 
   public static void selectTypeOfValues(String typeOfValue) {
     ElementHelper.selectDropdownOption(
-      ServiceNowPropertiesPage.typeOfValuesDropdown, CdfPluginPropertiesLocators.locateDropdownListItem(typeOfValue));
+            ServiceNowPropertiesPage.typeOfValuesDropdown, CdfPluginPropertiesLocators.locateDropdownListItem(typeOfValue));
   }
 
   public static void configurePluginForReportingMode(ApplicationInReportingMode applicationName) {
@@ -105,4 +109,32 @@ public class ServiceNowPropertiesPageActions {
     selectMode(PluginMode.TABLE);
     fillTableNamePropertyInTableMode(tableName);
   }
+
+  public static void clickAddConnectionButton() {
+    ElementHelper.clickOnElement(ServiceNowPropertiesPage.addConnectionButton);
+  }
+
+  public static void clickServiceNowConnectorButton() {
+    ElementHelper.clickOnElement(ServiceNowPropertiesPage.connectorServiceNow);
+  }
+  public static void clickTestConnectorButton() {
+    ElementHelper.clickOnElement(ServiceNowPropertiesPage.connectionTestButton);
+
+  }
+
+  public static void clickCreateButton() {
+    ElementHelper.clickOnElement(ServiceNowPropertiesPage.createButton);
+
+  }
+
+  public static void clickServicenowConnectionButton() {
+    ElementHelper.clickOnElement(ServiceNowPropertiesPage.ServicenowConnectionButton);
+
+  }
+
+  public static void clickConnectionButton() {
+    ElementHelper.clickOnElement(ServiceNowPropertiesPage.connection);
+
+  }
+
 }

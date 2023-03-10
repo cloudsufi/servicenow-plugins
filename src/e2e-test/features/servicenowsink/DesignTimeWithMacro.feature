@@ -70,3 +70,33 @@ Feature: ServiceNow Sink - Design time validation scenarios (macro)
     And Enter input plugin property: "tableName" with value: "receiving_slip_line"
     And Click on the Macro button of Property: "operation" and set the value to: "operation"
     Then Validate "ServiceNow" plugin properties
+
+  @TS-SN-DSGN-SINK-MACRO-04 @BQ_SOURCE_TEST_RECEIVING_SLIP_LINE
+  Scenario: Verify user should be able to validate plugin with macros for Credentials section
+    When Open Datafusion Project to configure pipeline
+    And Select plugin: "BigQuery" from the plugins list as: "Source"
+    And Navigate to the properties page of plugin: "BigQuery"
+    And Configure BigQuery source plugin for Dataset and Table
+    And Validate "BigQuery" plugin properties
+    And Close the Plugin Properties page
+    And Select Sink plugin: "ServiceNow" from the plugins list
+    And Connect plugins: "BigQuery" and "ServiceNow" to establish connection
+    And Navigate to the properties page of plugin: "ServiceNow"
+    And Click plugin property: "switch-useConnection"
+    And Click on the Browse Connections button
+    And Click on the Add Connection button
+    And Click on the ServiceNow Connector button
+    And Enter input plugin property: "name" with value: "connection.name"
+    And fill Credentials section for pipeline user
+    Then Click on the Test Connection button
+    And Verify the test connection is successful
+    Then Click on the Create button
+    And Click on the Servicenowconnection Button
+    And Fill Reference Name
+    And Click on the Macro button of Property: "clientId" and set the value to: "clientId"
+    And Click on the Macro button of Property: "clientSecret" and set the value to: "clientSecret"
+    And Click on the Macro button of Property: "restApiEndpoint" and set the value to: "restApiEndpoint"
+    And Click on the Macro button of Property: "user" and set the value to: "username"
+    And Click on the Macro button of Property: "password" and set the value to: "password"
+    And Enter input plugin property: "tableName" with value: "receiving_slip_line"
+    Then Validate "ServiceNow" plugin properties

@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.cdap.e2e.utils.AssertionHelper;
 import io.cdap.e2e.utils.BigQueryClient;
+import io.cdap.e2e.utils.ElementHelper;
 import io.cdap.e2e.utils.PluginPropertyUtils;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.servicenow.locators.ServiceNowPropertiesPage;
@@ -163,4 +164,5 @@ public class ServiceNowSinkPropertiesPageActions {
   public static void verifyErrorForNonCreatableFields() {
     AssertionHelper.verifyElementDisplayed(ServiceNowPropertiesPage.fieldNotCreatableError);
   }
+
 }
