@@ -50,8 +50,8 @@ Feature: ServiceNow Multi Source - Design time scenarios
     And Enter input plugin property: "endDate" with value: "end.date"
     Then Validate "ServiceNow Multi Source" plugin properties
 
-    @TS-SN-MULTI-DSGN-04
-    Scenario: Verify user should be able to create the valid connection using connection manager functionality for ServiceNow Multisource
+    @TS-SN-MULTI-DSGN-04 @CONNECTION
+    Scenario: Verify user should be able to create the valid connection using connection manager functionality for ServiceNow Multi source
       When Open Datafusion Project to configure pipeline
       And Select plugin: "ServiceNow Multi Source" from the plugins list as: "Source"
       And Navigate to the properties page of plugin: "ServiceNow Multi Source"
@@ -59,7 +59,7 @@ Feature: ServiceNow Multi Source - Design time scenarios
       And Click on the Browse Connections button
       And Click on the Add Connection button
       And Click on the ServiceNow Connector button
-      And Enter input plugin property: "name" with value: "ServiceNowConnection"
+      And Enter input plugin property: "name" with value: "connection.name"
       And fill Credentials section for pipeline user
       Then Click on the Test Connection button
       And Verify the test connection is successful

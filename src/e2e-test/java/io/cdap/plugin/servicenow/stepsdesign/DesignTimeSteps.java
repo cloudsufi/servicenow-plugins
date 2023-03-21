@@ -15,14 +15,10 @@
  */
 
 package io.cdap.plugin.servicenow.stepsdesign;
-
-import io.cdap.e2e.pages.actions.CdfConnectionActions;
-import io.cdap.e2e.pages.actions.CdfPluginPropertiesActions;
 import io.cdap.plugin.servicenow.actions.ServiceNowPropertiesPageActions;
 import io.cdap.plugin.utils.enums.ApplicationInReportingMode;
 import io.cdap.plugin.utils.enums.PluginMode;
 import io.cdap.plugin.utils.enums.TablesInTableMode;
-import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -72,23 +68,26 @@ public class DesignTimeSteps {
 
   @Then("Click on the ServiceNow Connector button")
   public void clickOnServiceNowConnectorButton () {
-    ServiceNowPropertiesPageActions.clickServiceNowConnectorButton();}
+    ServiceNowPropertiesPageActions.clickServiceNowConnectorButton();
+  }
 
   @Then("Click on the Test Connection button")
   public void clickOnTestConnectionButton () {
-    ServiceNowPropertiesPageActions.clickTestConnectorButton();}
+    ServiceNowPropertiesPageActions.clickTestConnectorButton();
+  }
 
   @Then("Click on the Create button")
   public void clickOnCreateButton () {
-    ServiceNowPropertiesPageActions.clickCreateButton();}
-
-  @Then("Click on the Servicenowconnection Button")
-  public void clickOnServicenowConnectionButton () {
-    ServiceNowPropertiesPageActions.clickServicenowConnectionButton();}
-
+    ServiceNowPropertiesPageActions.clickCreateButton();
+  }
+  @Then("Click on the ServiceNowConnection Button")
+  public void clickOnServiceNowConnectionButton () {
+    ServiceNowPropertiesPageActions.clickServicenowConnectionButton();
+  }
   @Then("Click on the Connection Button")
   public void clickOnConnectionButton () {
-    ServiceNowPropertiesPageActions.clickConnectionButton();}
-
+    ServiceNowPropertiesPageActions.clickConnectionButton();
   }
+}
+
 
