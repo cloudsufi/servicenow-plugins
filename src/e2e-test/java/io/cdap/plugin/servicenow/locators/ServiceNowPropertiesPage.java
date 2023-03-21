@@ -72,31 +72,17 @@ public class ServiceNowPropertiesPage {
           "//*[local-name()='svg' and @data-cy='error-icon']")
   public static WebElement fieldNotCreatableError;
 
-
   // Connection Manager
-  @FindBy(how = XPATH, using = "//input[@data-cy='toggle-NO']")
-  public static WebElement verifyPluginPropertyToggleState;
-
-
-
-  // addConnection
-  @FindBy(how= XPATH, using ="//*[contains(text(),'Add Connection')]" )
+  @FindBy(how = XPATH, using = "//*[contains(text(),'Add Connection')]")
   public static WebElement addConnectionButton;
-
   @FindBy(how = XPATH, using = "//div[@data-cy='connector-ServiceNow']")
   public static WebElement connectorServiceNow;
-
   @FindBy(how = XPATH, using = "//button[@data-cy='connection-test-button']")
   public static WebElement connectionTestButton;
-
   @FindBy(how = XPATH, using = "//button[@data-cy='connection-submit-button']")
-  public static WebElement createButton;
-
-  @FindBy(how= XPATH, using ="//*[contains(text(),'ServicenowconnectionTest8')]" )
-  public static WebElement ServicenowConnectionButton;
-
+  public static WebElement submitConnection;
+  @FindBy(how = XPATH, using = "//*[contains(text(),'ServiceNowConnection')]")
+  public static WebElement serviceNowConnectionButton;
   @FindBy(how = XPATH, using = "//button[@data-cy='connection']")
   public static WebElement connection;
-
-
 }

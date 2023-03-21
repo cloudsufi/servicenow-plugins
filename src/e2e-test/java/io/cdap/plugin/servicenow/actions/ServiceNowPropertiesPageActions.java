@@ -32,9 +32,6 @@ import org.apache.commons.lang3.RandomStringUtils;
  * ServiceNow batch source - Properties page - Actions.
  */
 public class ServiceNowPropertiesPageActions {
-
-  public static Object clickaddConnectionButton;
-
   static {
     SeleniumHelper.getPropertiesLocators(ServiceNowPropertiesPage.class);
   }
@@ -92,8 +89,8 @@ public class ServiceNowPropertiesPageActions {
   }
 
   public static void selectTypeOfValues(String typeOfValue) {
-    ElementHelper.selectDropdownOption(
-            ServiceNowPropertiesPage.typeOfValuesDropdown, CdfPluginPropertiesLocators.locateDropdownListItem(typeOfValue));
+    ElementHelper.selectDropdownOption(ServiceNowPropertiesPage.typeOfValuesDropdown,
+      CdfPluginPropertiesLocators.locateDropdownListItem(typeOfValue));
   }
 
   public static void configurePluginForReportingMode(ApplicationInReportingMode applicationName) {
@@ -117,24 +114,19 @@ public class ServiceNowPropertiesPageActions {
   public static void clickServiceNowConnectorButton() {
     ElementHelper.clickOnElement(ServiceNowPropertiesPage.connectorServiceNow);
   }
-  public static void clickTestConnectorButton() {
+  public static void clickTestConnectionButton() {
     ElementHelper.clickOnElement(ServiceNowPropertiesPage.connectionTestButton);
-
   }
 
   public static void clickCreateButton() {
-    ElementHelper.clickOnElement(ServiceNowPropertiesPage.createButton);
-
+    ElementHelper.clickOnElement(ServiceNowPropertiesPage.submitConnection);
   }
 
   public static void clickServicenowConnectionButton() {
-    ElementHelper.clickOnElement(ServiceNowPropertiesPage.ServicenowConnectionButton);
-
+    ElementHelper.clickOnElement(ServiceNowPropertiesPage.serviceNowConnectionButton);
   }
 
   public static void clickConnectionButton() {
     ElementHelper.clickOnElement(ServiceNowPropertiesPage.connection);
-
   }
-
 }

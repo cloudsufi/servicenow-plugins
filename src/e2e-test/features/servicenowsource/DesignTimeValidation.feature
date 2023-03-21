@@ -72,7 +72,7 @@ Feature: ServiceNow Source - Design time validation scenarios
     And Click on the Validate button
     Then Verify that the Plugin Property: "endDate" is displaying an in-line error message: "invalid.property.enddate"
 
-  @TS-SN-DSGN-05
+  @TS-SN-DSGN-05 @CONNECTION
   Scenario: Verify user should be able to get invalid credentials validation message when using invalid credentials in the connection manager functionality
     When Open Datafusion Project to configure pipeline
     And Select plugin: "ServiceNow" from the plugins list as: "Source"
@@ -81,7 +81,7 @@ Feature: ServiceNow Source - Design time validation scenarios
     And Click on the Browse Connections button
     And Click on the Add Connection button
     And Click on the ServiceNow Connector button
-    And Enter input plugin property: "name" with value: "ServiceNowConnection"
+    And Enter input plugin property: "name" with value: "connection.name"
     And fill Credentials section with invalid credentials
     Then Click on the Test Connection button
     Then Verify invalid credentials validation message for below listed properties:

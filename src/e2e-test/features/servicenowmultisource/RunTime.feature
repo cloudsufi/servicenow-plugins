@@ -80,7 +80,6 @@ Feature: ServiceNow Multi Source - Run time scenarios
     And Enter input plugin property: "referenceName" with value: "test"
     And configure ServiceNow Multi source plugin for below listed tables:
       | HARDWARE_CATALOG | RECEIVING_SLIP_LINE |
-    And fill Credentials section for pipeline user
     Then Validate "ServiceNow Multi Source" plugin properties
     And Close the Plugin Properties page
     And Select Sink plugin: "BigQueryMultiTable" from the plugins list

@@ -151,7 +151,6 @@ Feature: ServiceNow Sink - Run time scenarios
     And Navigate to the properties page of plugin: "BigQuery"
     And Replace input plugin property: "project" with value: "projectId"
     And Enter input plugin property: "datasetProject" with value: "datasetprojectId"
-    And Replace input plugin property: "serviceFilePath" with value: "file.path"
     And Configure BigQuery source plugin for Dataset and Table
     And Validate "BigQuery" plugin properties
     And Capture the generated Output Schema

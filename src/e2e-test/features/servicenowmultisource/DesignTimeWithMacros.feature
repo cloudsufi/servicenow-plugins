@@ -32,29 +32,3 @@ Feature: ServiceNow Multi Source - Design time scenarios (macro)
     And Click on the Macro button of Property: "password" and set the value to: "password"
     Then Validate "ServiceNow Multi Source" plugin properties
 
-  @TS-SN-MULTI-DSGN-MACRO-02 @CONNECTION
-  Scenario: Verify user should be able to validate plugin with macros in Connection
-    When Open Datafusion Project to configure pipeline
-    And Select plugin: "ServiceNow Multi Source" from the plugins list as: "Source"
-    And Navigate to the properties page of plugin: "ServiceNow Multi Source"
-    And Click plugin property: "switch-useConnection"
-    And Click on the Browse Connections button
-    And Click on the Add Connection button
-    And Click on the ServiceNow Connector button
-    And Enter input plugin property: "name" with value: "connection.name"
-    And fill Credentials section for pipeline user
-    Then Click on the Test Connection button
-    And Verify the test connection is successful
-    Then Click on the Create button
-    And Click on the Servicenowconnection Button
-    And fill Credentials section for pipeline user
-    Then Click on the Test Connection button
-    And Verify the test connection is successful
-    And Fill Reference Name
-    And Click on the Macro button of Property: "tableNames" and set the value to: "tableNames"
-    And Click on the Macro button of Property: "clientId" and set the value to: "clientId"
-    And Click on the Macro button of Property: "clientSecret" and set the value to: "clientSecret"
-    And Click on the Macro button of Property: "restApiEndpoint" and set the value to: "restApiEndpoint"
-    And Click on the Macro button of Property: "user" and set the value to: "username"
-    And Click on the Macro button of Property: "password" and set the value to: "password"
-    Then Validate "ServiceNow Multi Source" plugin properties

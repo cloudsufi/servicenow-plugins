@@ -234,14 +234,11 @@ public class TestSetupHooks {
   }
 
   @Before(order = 1, value = "@CONNECTION")
-  public static void setNewConnectionName(){
+  public static void setNewConnectionName() {
     connectionName = "ServiceNowConnection" + RandomStringUtils.randomAlphanumeric(10);
     PluginPropertyUtils.addPluginProp("connection.name", connectionName);
-    BeforeActions.scenario.write( "New Connection name: " + connectionName);
+    BeforeActions.scenario.write("New Connection name: " + connectionName);
   }
-
-
-
 
   @After(order = 1, value = "@BQ_SINK_CLEANUP")
   public static void deleteTempTargetBQTable() throws IOException, InterruptedException {
