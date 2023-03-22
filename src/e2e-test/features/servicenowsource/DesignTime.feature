@@ -58,7 +58,7 @@ Feature: ServiceNow Source - Design time scenarios
     Then Validate "ServiceNow" plugin properties
     And Verify the Output Schema matches the Expected Schema: "schema.table.receiving.slip.line"
 
-  @TS-SN-DSGN-04 @CONNECTIO
+  @TS-SN-DSGN-04
   Scenario: Verify user should be able to create the valid connection using connection manager functionality
     When Open Datafusion Project to configure pipeline
     And Select plugin: "ServiceNow" from the plugins list as: "Source"
@@ -67,14 +67,7 @@ Feature: ServiceNow Source - Design time scenarios
     And Click on the Browse Connections button
     And Click on the Add Connection button
     And Select ServiceNow Connection
-    And Enter input plugin property: "name" with value: "connection.name"
+    And Enter input plugin property: "name" with value: "ServiceNowConnection"
     And fill Credentials section for pipeline user
     Then Click on the Test Connection button
     And Verify the test connection is successful
-
-
-
-
-
-
-

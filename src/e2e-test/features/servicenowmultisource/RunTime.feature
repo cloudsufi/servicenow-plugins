@@ -70,13 +70,13 @@ Feature: ServiceNow Multi Source - Run time scenarios
     And Click plugin property: "switch-useConnection"
     And Click on the Browse Connections button
     And Click on the Add Connection button
-    And Click on the ServiceNow Connector button
+    And Select ServiceNow Connection
     And Enter input plugin property: "name" with value: "connection.name"
     And fill Credentials section for pipeline user
     Then Click on the Test Connection button
     And Verify the test connection is successful
     Then Click on the Create button
-    And Click on the Servicenowconnection Button
+    And Select ServiceNow Connection
     And Enter input plugin property: "referenceName" with value: "test"
     And configure ServiceNow Multi source plugin for below listed tables:
       | HARDWARE_CATALOG | RECEIVING_SLIP_LINE |
