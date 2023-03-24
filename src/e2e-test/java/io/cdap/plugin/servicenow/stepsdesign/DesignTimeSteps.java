@@ -42,13 +42,13 @@ public class DesignTimeSteps {
   @When("configure ServiceNow source plugin for application: {string} in the Reporting mode")
   public void configureServiceNowSourceForApplication(String applicationName) {
     ServiceNowPropertiesPageActions
-      .configurePluginForReportingMode(ApplicationInReportingMode.valueOf(applicationName));
+            .configurePluginForReportingMode(ApplicationInReportingMode.valueOf(applicationName));
   }
 
   @When("configure ServiceNow source plugin for table: {string} in the Table mode")
   public void configureServiceNowSourceForTable(String tableName) {
     ServiceNowPropertiesPageActions
-      .configurePluginForTableMode(TablesInTableMode.valueOf(tableName));
+            .configurePluginForTableMode(TablesInTableMode.valueOf(tableName));
   }
 
   @When("fill Credentials section for pipeline user")
@@ -61,34 +61,13 @@ public class DesignTimeSteps {
     ServiceNowPropertiesPageActions.fillCredentialsSectionWithInvalidCredentials();
   }
 
-  @Then("Click on the Add Connection button")
-    public void clickOnAddConnectionButton () {
-    ServiceNowPropertiesPageActions.clickAddConnectionButton();
-  }
-
   @Then("Select ServiceNow Connection")
-  public void clickOnServiceNowConnectorButton () {
+  public void clickOnServiceNowConnectorButton() {
     ServiceNowPropertiesPageActions.clickServiceNowConnectorButton();
   }
 
-  @Then("Click on the Test Connection button")
-  public void clickOnTestConnectionButton () {
-    ServiceNowPropertiesPageActions.clickTestConnectionButton();
-  }
-
-  @Then("Click on the Create button")
-  public void clickOnCreateButton () {
-    ServiceNowPropertiesPageActions.clickCreateButton();
-  }
-
   @Then("Click on the ServiceNowConnection Button")
-  public void clickOnServiceNowConnectionButton () {
+  public void clickOnServiceNowConnectionButton() {
     ServiceNowPropertiesPageActions.clickServicenowConnectionButton();
   }
-  @Then("Click on the Connection Button")
-  public void clickOnConnectionButton () {
-    ServiceNowPropertiesPageActions.clickConnectionButton();
-  }
 }
-
-

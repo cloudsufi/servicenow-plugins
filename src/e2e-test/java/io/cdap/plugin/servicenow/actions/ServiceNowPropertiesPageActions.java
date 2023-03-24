@@ -90,7 +90,7 @@ public class ServiceNowPropertiesPageActions {
 
   public static void selectTypeOfValues(String typeOfValue) {
     ElementHelper.selectDropdownOption(ServiceNowPropertiesPage.typeOfValuesDropdown,
-      CdfPluginPropertiesLocators.locateDropdownListItem(typeOfValue));
+            CdfPluginPropertiesLocators.locateDropdownListItem(typeOfValue));
   }
 
   public static void configurePluginForReportingMode(ApplicationInReportingMode applicationName) {
@@ -107,26 +107,11 @@ public class ServiceNowPropertiesPageActions {
     fillTableNamePropertyInTableMode(tableName);
   }
 
-  public static void clickAddConnectionButton() {
-    ElementHelper.clickOnElement(ServiceNowPropertiesPage.addConnectionButton);
-  }
-
   public static void clickServiceNowConnectorButton() {
     ElementHelper.clickOnElement(ServiceNowPropertiesPage.connectorServiceNow);
-  }
-  public static void clickTestConnectionButton() {
-    ElementHelper.clickOnElement(ServiceNowPropertiesPage.connectionTestButton);
-  }
-
-  public static void clickCreateButton() {
-    ElementHelper.clickOnElement(ServiceNowPropertiesPage.submitConnection);
   }
 
   public static void clickServicenowConnectionButton() {
     ElementHelper.clickOnElement(ServiceNowPropertiesPage.serviceNowConnectionButton);
-  }
-
-  public static void clickConnectionButton() {
-    ElementHelper.clickOnElement(ServiceNowPropertiesPage.connection);
   }
 }
