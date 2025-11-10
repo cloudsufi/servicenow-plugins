@@ -21,11 +21,14 @@ import com.google.gson.JsonObject;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowAPIException;
 import io.cdap.plugin.servicenow.util.ServiceNowConstants;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,25 +43,31 @@ import javax.annotation.Nullable;
  * Pojo class to capture the API response.
  */
 public class RestAPIResponse {
+  private static final Logger LOG = LoggerFactory.getLogger(RestAPIResponse.class);
   private static final Gson GSON = new Gson();
   private static final String HTTP_ERROR_MESSAGE = "Http call to ServiceNow instance returned status code %d.";
   private static final String REST_ERROR_MESSAGE = "Rest Api response has errors. Error message: %s.";
   private static final Set<Integer> SUCCESS_CODES = new HashSet<>(Collections.singletonList(HttpStatus.SC_OK));
   private final Map<String, String> headers;
-  private final String responseBody;
   @Nullable private final ServiceNowAPIException exception;
 
+  // Input stream of the response body.
+  private InputStream responseStream;
+
   public RestAPIResponse(
-      Map<String, String> headers,
-      @Nullable String responseBody,
-      @Nullable ServiceNowAPIException exception) {
+    Map<String, String> headers,
+    InputStream responseStream,
+    @Nullable ServiceNowAPIException exception) {
     this.headers = headers;
-    this.responseBody = responseBody;
+    this.responseStream = responseStream;
     this.exception = exception;
   }
 
   /**
    * Parses HttpResponse into RestAPIResponse object when no errors occur.
+   * The RESTAPIResponse contains the HTTP response body as a stream. This stream is:
+   * single-use, forward-only and owned by the caller. Caller is responsible for consuming and closing it.
+   *
    * Throws a {@link ServiceNowAPIException}.
    *
    * @param httpResponse The HttpResponse object to parse
@@ -81,15 +90,29 @@ public class RestAPIResponse {
     if (serviceNowAPIException != null) {
       return new RestAPIResponse(headers, null, serviceNowAPIException);
     }
-
-    String responseBody = null;
     try {
-      responseBody = EntityUtils.toString(httpResponse.getEntity());
+      return prepareResponse(httpResponse, headers, serviceNowAPIException);
     } catch (IOException e) {
       return new RestAPIResponse(headers, null, new ServiceNowAPIException(e, httpResponse));
     }
-    serviceNowAPIException = validateRestApiResponse(httpResponse, responseBody);
-    return new RestAPIResponse(headers, responseBody, serviceNowAPIException);
+  }
+
+  public void close() throws IOException {
+    if (responseStream != null) {
+      responseStream.close();
+    }
+  }
+
+  public static RestAPIResponse prepareResponse(HttpResponse httpResponse, Map<String, String> headers,
+      ServiceNowAPIException serviceNowAPIException) throws IOException {
+    HttpEntity httpEntity = httpResponse.getEntity();
+    InputStream inputStream;
+    if (httpEntity != null) {
+      inputStream = httpEntity.getContent();
+      return new RestAPIResponse(headers, inputStream, serviceNowAPIException);
+    } else {
+      return new RestAPIResponse(headers, null, serviceNowAPIException);
+    }
   }
 
   public static RestAPIResponse parse(HttpResponse httpResponse) throws IOException {
@@ -126,16 +149,15 @@ public class RestAPIResponse {
   }
 
   @Nullable
-  public String getResponseBody() {
-    return responseBody;
-  }
-
-  @Nullable
   public ServiceNowAPIException getException() {
     return exception;
   }
 
   public boolean hasException() {
     return exception != null;
+  }
+
+  public InputStream getResponseStream() {
+    return responseStream;
   }
 }

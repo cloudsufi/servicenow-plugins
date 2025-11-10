@@ -47,7 +47,7 @@ import javax.annotation.Nullable;
 
 public class ServiceNowSinkPropertiesPageActions {
   public static ServiceNowSourceConfig config;
-  private static Map<String, String> responseFromServiceNowTable;
+  private static JsonObject responseFromServiceNowTable;
   private static Gson gson = new Gson();
 
   public static void getRecordFromServiceNowTable(String query, String tableName)
@@ -69,14 +69,20 @@ public class ServiceNowSinkPropertiesPageActions {
       throws IOException, InterruptedException, ServiceNowAPIException {
 
     getRecordFromServiceNowTable(query, tableName);
-    TableResult bigQueryTableData = getBigQueryTableData(TestSetupHooks.bqSourceDataset, TestSetupHooks.bqSourceTable);
-    if (bigQueryTableData == null) {
-      return;
+    List<JsonObject> serviceNowResponse = new ArrayList<>();
+    serviceNowResponse.add(responseFromServiceNowTable);
+
+    List<JsonObject> bigQueryResponse = new ArrayList<>();
+    List<Object> bigQueryRows = new ArrayList<>();
+    getBigQueryTableData(bqTable, bigQueryRows);
+    for (Object rows : bigQueryRows) {
+      JsonObject jsonData = gson.fromJson(String.valueOf(rows), JsonObject.class);
+      if (jsonData.has("sys_id") && TestSetupHooks.systemId.equals(jsonData.get("sys_id").getAsString())) {
+        bigQueryResponse.add(jsonData);
+        break;
+      }
     }
-    String bigQueryJsonResponse = bigQueryTableData.getValues().iterator().next().get(0).getValue().toString();
-    JsonObject jsonObject = gson.fromJson(bigQueryJsonResponse, JsonObject.class);
-    Map<String, Object> bigQueryResponseInMap = gson.fromJson(jsonObject.toString(), Map.class);
-    Assert.assertTrue(compareValueOfBothResponses(responseFromServiceNowTable, bigQueryResponseInMap));
+    return compareServiceNowAndJsonData(serviceNowResponse, bigQueryResponse, bqTable);
   }
 
   public static void verifyIfRecordUpdatedInServiceNowIsCorrect(String query, String tableName)
@@ -103,35 +109,81 @@ public class ServiceNowSinkPropertiesPageActions {
     return BigQueryClient.getQueryResult(selectQuery);
   }
 
-  public static boolean compareValueOfBothResponses(Map<String, String> serviceNowResponseMap,
-      Map<String, Object> bigQueryResponseMap) {
-    if (serviceNowResponseMap.isEmpty() || bigQueryResponseMap.isEmpty()) {
-      return false;
-    }
+  public static boolean compareServiceNowAndJsonData(List<JsonObject> serviceNowData, List<JsonObject> bigQueryData,
+                                                     String tableName) throws NullPointerException {
     boolean result = false;
-    Set<String> bigQueryKeySet = bigQueryResponseMap.keySet();
+    if (bigQueryData == null) {
+      Assert.fail("bigQueryData is null");
+      return result;
+    }
+    if (serviceNowData.isEmpty() || bigQueryData.isEmpty()) {
+      Assert.fail("One or both datasets are empty");
+      return result;
+    }
 
-    for (String key : bigQueryKeySet) {
-      Object serviceNowValue = serviceNowResponseMap.get(key);
-      Object bigQueryValue = bigQueryResponseMap.get(key);
+    BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+    String projectId = PluginPropertyUtils.pluginProp("projectId");
+    String dataset = PluginPropertyUtils.pluginProp("dataset");
+    // Build the table reference
+    TableId tableRef = TableId.of(projectId, dataset, tableName);
+    // Get the table schema
+    Schema schema = bigQuery.getTable(tableRef).getDefinition().getSchema();
 
-      if (bigQueryValue instanceof Double) {
-        String bigDecimalValue = new BigDecimal(String.valueOf(bigQueryValue)).setScale(
-            ServiceNowConstants.DEFAULT_SCALE, RoundingMode.HALF_UP).toString();
-        result = serviceNowValue.equals(bigDecimalValue);
-      } else if (checkBigQueryDateFormat(bigQueryValue.toString()) != null) {
-        SimpleDateFormat serviceNowDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String bigQueryFormattedValue = serviceNowDateFormat.format(checkBigQueryDateFormat(bigQueryValue.toString()));
-        result = String.valueOf(serviceNowValue).equals(bigQueryFormattedValue);
-      } else {
-        result = String.valueOf(serviceNowValue).equals(String.valueOf(bigQueryValue));
-      }
+    for (int rowIndex = 0; rowIndex < serviceNowData.size(); rowIndex++) {
+      JsonObject serviceNowRow = serviceNowData.get(rowIndex);
+      JsonObject bigQueryRow = bigQueryData.get(rowIndex);
 
-      if (!result) {
-        return false;
+      for (Field field : schema.getFields()) {
+        String columnName = field.getName();
+        String columnType = field.getType().toString();
+
+        switch (columnType) {
+          case "BOOLEAN":
+            boolean sourceAsBoolean = serviceNowRow.get(columnName).getAsBoolean();
+            boolean targetAsBoolean = bigQueryRow.get(columnName).getAsBoolean();
+            Assert.assertEquals("Different values found for column : %s", sourceAsBoolean, targetAsBoolean);
+            break;
+          case "INTEGER":
+            int sourceAsInteger = serviceNowRow.get(columnName).getAsInt();
+            int targetAsInteger = bigQueryRow.get(columnName).getAsInt();
+            Assert.assertEquals("Different values found for column : %s", sourceAsInteger, targetAsInteger);
+            break;
+          case "DATETIME":
+            LocalDateTime sourceDateTime = LocalDateTime.parse(serviceNowRow.get(columnName).getAsString(),
+                                                               DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            LocalDateTime targetDateTime = LocalDateTime.parse(serviceNowRow.get(columnName).getAsString(),
+                                                               DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            Assert.assertEquals("Different values found for column : %s", sourceDateTime, targetDateTime);
+            break;
+          case "FLOAT":
+            double sourceVal = serviceNowRow.get(columnName).getAsDouble();
+            double targetVal = bigQueryRow.get(columnName).getAsDouble();
+            Assert.assertEquals(String.format("Different values found for column: %s", columnName), 0,
+                                Double.compare(sourceVal, targetVal));
+            break;
+          default:
+            JsonElement sourceElement = serviceNowRow.get(columnName);
+            String sourceString = (sourceElement != null && !sourceElement.isJsonNull())
+              ? sourceElement.getAsString() : null;
+            JsonElement targetElement = bigQueryRow.get(columnName);
+            String targetString = (targetElement != null && !targetElement.isJsonNull())
+              ? targetElement.getAsString() : null;
+            // Normalize values: treat empty string ("") as equivalent to null
+            if ("".equals(sourceString)) {
+              sourceString = null;
+            }
+            if ("".equals(targetString)) {
+              targetString = null;
+            }
+            Assert.assertEquals(String.format("Different  values found for column : %s", columnName),
+                                String.valueOf(sourceString), String.valueOf(targetString));
+        }
       }
     }
-    return result;
+
+    Assert.assertFalse("Number of rows in Source table is greater than the number of rows in Target table",
+                       serviceNowData.size() > bigQueryData.size());
+    return true;
   }
 
   /**

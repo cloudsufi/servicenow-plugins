@@ -15,6 +15,7 @@
  */
 package io.cdap.plugin.servicenow.connector;
 
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.ConnectorContext;
@@ -26,6 +27,7 @@ import io.cdap.cdap.etl.mock.common.MockConnectorContext;
 import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowTableAPIClientImpl;
+import io.cdap.plugin.servicenow.restapi.RestAPIClient;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.source.ServiceNowBaseSourceConfig;
 import io.cdap.plugin.servicenow.source.ServiceNowInputFormat;
@@ -41,7 +43,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.oltu.oauth2.client.OAuthClient;
-import org.apache.oltu.oauth2.client.URLConnectionClient;
 import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,7 +54,10 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -95,6 +99,9 @@ public class ServiceNowConnectorTest {
   public void testTest() throws Exception {
     MockFailureCollector collector = new MockFailureCollector();
     ConnectorContext context = new MockConnectorContext(new MockConnectorConfigurer());
+    CloseableHttpClient mockHttpClient = Mockito.mock(CloseableHttpClient.class);
+    PowerMockito.stub(PowerMockito.method(RestAPIClient.class, "getHttpClient"))
+      .toReturn(mockHttpClient);
     ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
     Mockito.when(restApi.getAccessToken()).thenReturn("token");
     PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withAnyArguments().thenReturn(restApi);
@@ -106,6 +113,9 @@ public class ServiceNowConnectorTest {
   @Test
   public void testTestWithInvalidToken() throws Exception {
     ConnectorContext context = new MockConnectorContext(new MockConnectorConfigurer());
+    CloseableHttpClient mockHttpClient = Mockito.mock(CloseableHttpClient.class);
+    PowerMockito.stub(PowerMockito.method(RestAPIClient.class, "getHttpClient"))
+      .toReturn(mockHttpClient);
     ServiceNowConnector serviceNowConnector = new ServiceNowConnector(serviceNowSourceConfig.getConnection());
     serviceNowConnector.test(context);
     Assert.assertEquals(1, context.getFailureCollector().getValidationFailures().size());
@@ -116,10 +126,10 @@ public class ServiceNowConnectorTest {
     ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
     Mockito.when(restApi.getAccessToken()).thenReturn("token");
     PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withAnyArguments().thenReturn(restApi);
-    Map<String, String> map = new HashMap<>();
-    List<Map<String, String>> result = new ArrayList<>();
-    map.put("key", "value");
-    result.add(map);
+    JsonObject jsonObject = new JsonObject();
+    List<JsonObject> result = new ArrayList<>();
+    jsonObject.addProperty("key", "value");
+    result.add(jsonObject);
     int httpStatus = HttpStatus.SC_OK;
     Map<String, String> headers = new HashMap<>();
     String responseBody = "{\n" +
@@ -131,9 +141,10 @@ public class ServiceNowConnectorTest {
       "        }\n" +
       "    ]\n" +
       "}";
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, responseBody, null);
+    byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
+    InputStream inputStream = new ByteArrayInputStream(body);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
-    Mockito.when(restApi.parseResponseToResultListOfMap(restAPIResponse.getResponseBody())).thenReturn(result);
     OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
     PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withAnyArguments().thenReturn(restApi);
     OAuthJSONAccessTokenResponse accessTokenResponse = Mockito.mock(OAuthJSONAccessTokenResponse.class);
