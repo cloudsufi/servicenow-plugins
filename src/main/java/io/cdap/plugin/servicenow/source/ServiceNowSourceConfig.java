@@ -57,6 +57,9 @@ public class ServiceNowSourceConfig extends ServiceNowBaseSourceConfig {
     "will be ignored if the Mode is set to `Reporting`. The ServiceNow table can be browsed using browse button.")
   private String tableName;
 
+  @Nullable
+  private String query;
+
   /**
    * Constructor for ServiceNowSourceConfig object.
    *
@@ -80,12 +83,41 @@ public class ServiceNowSourceConfig extends ServiceNowBaseSourceConfig {
                                 String clientSecret, String restApiEndpoint, String user, String password,
                                 String valueType, @Nullable String startDate, @Nullable String endDate,
                                 Integer pageSize) {
+    this(referenceName, queryMode, applicationName, tableNameField, tableName, clientId, clientSecret,
+         restApiEndpoint, user, password, valueType, startDate, endDate, pageSize, null);
+  }
+
+  /**
+   * Constructor for ServiceNowSourceConfig object.
+   *
+   * @param referenceName   The reference name
+   * @param queryMode       The query mode
+   * @param applicationName The application name
+   * @param tableNameField  The field name to hold the table name value
+   * @param tableName       The table name
+   * @param clientId        The Client Id for ServiceNow
+   * @param clientSecret    The Client Secret for ServiceNow
+   * @param restApiEndpoint The rest API endpoint for ServiceNow
+   * @param user            The user id for ServiceNow
+   * @param password        The password for ServiceNow
+   * @param valueType       The value type
+   * @param startDate       The start date
+   * @param endDate         The end date
+   * @param pageSize        The page size
+   * @param query           The query
+   */
+  public ServiceNowSourceConfig(String referenceName, String queryMode, @Nullable String applicationName,
+                                @Nullable String tableNameField, @Nullable String tableName, String clientId,
+                                String clientSecret, String restApiEndpoint, String user, String password,
+                                String valueType, @Nullable String startDate, @Nullable String endDate,
+                                Integer pageSize, @Nullable String query) {
     super(referenceName, clientId, clientSecret, restApiEndpoint, user, password, tableNameField, valueType, startDate,
           endDate, pageSize);
     this.referenceName = referenceName;
     this.queryMode = queryMode;
     this.applicationName = applicationName;
     this.tableName = tableName;
+    this.query = query;
   }
 
   /**
@@ -115,7 +147,7 @@ public class ServiceNowSourceConfig extends ServiceNowBaseSourceConfig {
   public SourceQueryMode getQueryMode() {
     Optional<SourceQueryMode> sourceQueryMode = SourceQueryMode.fromValue(queryMode);
 
-    return sourceQueryMode.isPresent() ? sourceQueryMode.get() : null;
+    return sourceQueryMode.orElse(null);
   }
 
   /**
@@ -146,14 +178,19 @@ public class ServiceNowSourceConfig extends ServiceNowBaseSourceConfig {
   public SourceApplication getApplicationName() {
     Optional<SourceApplication> sourceApplication = SourceApplication.fromValue(applicationName);
 
-    return sourceApplication.isPresent() ? sourceApplication.get() : null;
+    return sourceApplication.orElse(null);
   }
 
   @Nullable
   public String getTableName() {
     return tableName;
   }
-  
+
+  @Nullable
+  public String getQuery() {
+    return query;
+  }
+
   /**
    * Validates {@link ServiceNowSourceConfig} instance.
    */
@@ -209,5 +246,4 @@ public class ServiceNowSourceConfig extends ServiceNowBaseSourceConfig {
       validateTable(tableName, getValueType(), collector, ServiceNowConstants.PROPERTY_TABLE_NAME);
     }
   }
-
 }
