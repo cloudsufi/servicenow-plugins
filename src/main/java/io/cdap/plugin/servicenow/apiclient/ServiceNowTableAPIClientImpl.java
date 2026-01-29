@@ -38,6 +38,7 @@ import io.cdap.plugin.servicenow.model.SchemaAPISchemaField;
 import io.cdap.plugin.servicenow.model.SchemaAPISchemaResponse;
 import io.cdap.plugin.servicenow.restapi.RestAPIClient;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
+import io.cdap.plugin.servicenow.source.ServiceNowSourceConfig;
 import io.cdap.plugin.servicenow.util.SchemaBuilder;
 import io.cdap.plugin.servicenow.util.SchemaType;
 import io.cdap.plugin.servicenow.util.ServiceNowColumn;
@@ -81,6 +82,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
   private static final String GLIDE_DATE_TIME_DATATYPE = "glide_date_time";
   private static final Gson GSON = new Gson();
   private final ServiceNowConnectorConfig conf;
+  private ServiceNowSourceConfig sourceConfig;
   public final SchemaType schemaType;
   public static JsonArray serviceNowJsonResultArray;
 
@@ -89,11 +91,22 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
     this.schemaType = getSchemaTypeBasedOnUseConnection(useConnection);
   }
 
+  public ServiceNowTableAPIClientImpl(ServiceNowSourceConfig sourceConfig, Boolean useConnection) {
+    this(sourceConfig, useConnection, null);
+  }
+
+  public ServiceNowTableAPIClientImpl(ServiceNowSourceConfig sourceConfig, Boolean useConnection,
+                                      ServiceNowSourceConfig serviceNowSourceConfig) {
+    this.conf = sourceConfig.getConnection();
+    this.sourceConfig = serviceNowSourceConfig;
+    this.schemaType = getSchemaTypeBasedOnUseConnection(useConnection);
+  }
+
   public String getAccessToken() throws ServiceNowAPIException {
     try {
       return generateAccessToken(String.format(OAUTH_URL_TEMPLATE, conf.getRestApiEndpoint()),
-          conf.getClientId(),
-          conf.getClientSecret(), conf.getUser(), conf.getPassword());
+                                 conf.getClientId(),
+                                 conf.getClientSecret(), conf.getUser(), conf.getPassword());
     } catch (OAuthProblemException | OAuthSystemException e) {
       throw new ServiceNowAPIException("An error occurred while authenticating.", e, null, false);
     }
@@ -132,13 +145,13 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
    * @return The list of Map; each Map representing a table row
    */
   public List<Map<String, String>> fetchTableRecords(
-      String tableName,
-      SourceValueType valueType,
-      String startDate,
-      String endDate,
-      int offset,
-      int limit)
-      throws ServiceNowAPIException {
+    String tableName,
+    SourceValueType valueType,
+    String startDate,
+    String endDate,
+    int offset,
+    int limit)
+    throws ServiceNowAPIException {
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
       this.conf.getRestApiEndpoint(), tableName, false, schemaType)
       .setExcludeReferenceLink(true)
@@ -149,7 +162,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
       requestBuilder.setOffset(offset);
     }
 
-    applyDateRangeToRequest(requestBuilder, startDate, endDate);
+    applyQueryToRequest(requestBuilder, startDate, endDate);
 
     String accessToken = getAccessToken();
     requestBuilder.setAuthHeader(accessToken);
@@ -157,8 +170,15 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
     return parseResponseToResultListOfMap(apiResponse.getResponseBody());
   }
 
-  private void applyDateRangeToRequest(ServiceNowTableAPIRequestBuilder requestBuilder, String startDate,
-                                       String endDate) {
+  private void applyQueryToRequest(ServiceNowTableAPIRequestBuilder requestBuilder, String startDate,
+                                   String endDate) {
+    // Check if a query is provided in the source configuration
+    if (sourceConfig != null && !Strings.isNullOrEmpty(sourceConfig.getQuery())) {
+      requestBuilder.setQuery(sourceConfig.getQuery());
+      return;
+    }
+
+    // Fallback to the existing date range logic if no query is provided
     String dateRange = generateDateRangeQuery(startDate, endDate);
     if (!Strings.isNullOrEmpty(dateRange)) {
       requestBuilder.setQuery(dateRange);
@@ -250,8 +270,8 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
       retryer.call(fetchRecords);
     } catch (RetryException | ExecutionException e) {
       throw new ServiceNowAPIException(
-          String.format("Data Recovery failed for batch %s to %s.", offset, (offset + limit)),
-          e, null, false);
+        String.format("Data Recovery failed for batch %s to %s.", offset, (offset + limit)),
+        e, null, false);
     }
 
     return results;
@@ -290,7 +310,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
    * @throws ServiceNowAPIException
    */
   public Schema fetchTableSchema(String tableName, SourceValueType valueType)
-      throws ServiceNowAPIException {
+    throws ServiceNowAPIException {
     return fetchTableSchema(tableName, getAccessToken(), valueType, schemaType);
   }
 
@@ -314,7 +334,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
    */
   public Schema fetchTableSchema(String tableName, String accessToken, SourceValueType valueType,
                                  SchemaType schemaType)
-      throws ServiceNowAPIException {
+    throws ServiceNowAPIException {
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
       this.conf.getRestApiEndpoint(), tableName, true, schemaType)
       .setExcludeReferenceLink(true);
@@ -356,7 +376,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
 
     if (schemaAPISchemaResponse.getResult() == null || schemaAPISchemaResponse.getResult().isEmpty()) {
       throw new ServiceNowAPIException(
-       "Schema Response does not contain any result", null, null, false);
+        "Schema Response does not contain any result", null, null, false);
     }
 
     for (SchemaAPISchemaField field : schemaAPISchemaResponse.getResult()) {
@@ -421,7 +441,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
    * @throws ServiceNowAPIException
    */
   public int getTableRecordCount(String tableName)
-      throws ServiceNowAPIException {
+    throws ServiceNowAPIException {
     return getTableRecordCount(tableName, getAccessToken());
   }
 
@@ -516,7 +536,7 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
    * @param query The query
    */
   public Map<String, String> getRecordFromServiceNowTable(String tableName, String query)
-      throws ServiceNowAPIException {
+    throws ServiceNowAPIException {
 
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
       this.conf.getRestApiEndpoint(), tableName, false, schemaType)

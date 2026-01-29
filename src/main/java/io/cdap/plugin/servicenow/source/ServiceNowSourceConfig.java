@@ -57,6 +57,13 @@ public class ServiceNowSourceConfig extends ServiceNowBaseSourceConfig {
     "will be ignored if the Mode is set to `Reporting`. The ServiceNow table can be browsed using browse button.")
   private String tableName;
 
+  @Name(ServiceNowConstants.PROPERTY_QUERY)
+  @Macro
+  @Nullable
+  @Description("The query to fetch the data from table. The query is created from the WHERE clause of the " +
+    "SQL query. For example, WHERE column > '2022-01-01' AND column < '2022-02-01'.")
+  private String query;
+
   /**
    * Constructor for ServiceNowSourceConfig object.
    *
@@ -86,6 +93,20 @@ public class ServiceNowSourceConfig extends ServiceNowBaseSourceConfig {
     this.queryMode = queryMode;
     this.applicationName = applicationName;
     this.tableName = tableName;
+  }
+
+  public ServiceNowSourceConfig(String referenceName, String queryMode, @Nullable String applicationName,
+                                @Nullable String tableNameField, @Nullable String tableName, String clientId,
+                                String clientSecret, String restApiEndpoint, String user, String password,
+                                String valueType, @Nullable String startDate, @Nullable String endDate,
+                                Integer pageSize, @Nullable String query) {
+    super(referenceName, clientId, clientSecret, restApiEndpoint, user, password, tableNameField, valueType, startDate,
+          endDate, pageSize);
+    this.referenceName = referenceName;
+    this.queryMode = queryMode;
+    this.applicationName = applicationName;
+    this.tableName = tableName;
+    this.query = query;
   }
 
   /**
@@ -152,6 +173,11 @@ public class ServiceNowSourceConfig extends ServiceNowBaseSourceConfig {
   @Nullable
   public String getTableName() {
     return tableName;
+  }
+
+  @Nullable
+  public String getQuery() {
+    return query;
   }
   
   /**
