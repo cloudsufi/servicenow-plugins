@@ -30,6 +30,8 @@ public class ServiceNowInputSplit extends InputSplit implements Writable {
   private String tableName;
   private int offset;
 
+
+
   // used by mapreduce
   public ServiceNowInputSplit() {
   }
