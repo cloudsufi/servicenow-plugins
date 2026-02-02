@@ -92,8 +92,8 @@ public class ServiceNowTableAPIClientImpl extends RestAPIClient {
   public String getAccessToken() throws ServiceNowAPIException {
     try {
       return generateAccessToken(String.format(OAUTH_URL_TEMPLATE, conf.getRestApiEndpoint()),
-                                 conf.getClientId(),
-                                 conf.getClientSecret(), conf.getUser(), conf.getPassword());
+                conf.getClientId(),
+                conf.getClientSecret(), conf.getUser(), conf.getPassword());
     } catch (OAuthProblemException | OAuthSystemException e) {
       throw new ServiceNowAPIException("An error occurred while authenticating.", e, null, false);
     }
