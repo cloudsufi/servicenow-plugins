@@ -17,7 +17,6 @@
 package io.cdap.plugin.servicenow.source;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -54,7 +53,7 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
   protected String tableNameField;
   protected List<Map<String, String>> results;
   protected Iterator<Map<String, String>> iterator;
-  protected JsonObject row;
+  protected Map<String, String> row;
   protected final Gson gson = new Gson();
   protected final Type mapType = new TypeToken<Map<String, String>>() { }.getType();
   protected JsonReader jsonReader = null;
@@ -90,7 +89,7 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
 
     if (token == JsonToken.BEGIN_OBJECT) {
       LOG.debug("Reading record object for table {} at position {}", tableName, pos);
-      this.row = gson.fromJson(jsonReader, JsonObject.class); // assign row
+      this.row = gson.fromJson(jsonReader, mapType); // assign row
       pos++;
       return true;
     }
@@ -101,7 +100,7 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
   public boolean openNextPage() throws IOException, ServiceNowAPIException {
     closeCurrentPage();
     RestAPIResponse resp = fetchData();
-    InputStream in = resp.getResponseStream();
+    InputStream in = resp.getBodyAsStream();
     if (in == null) {
       return false;
     }
@@ -144,7 +143,6 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
         jsonReader.endArray();
         // cleanup
         closeCurrentPage();
-        closeRestAPIResponse(resp);
         return false;
       }
     } catch (IOException e) {
@@ -165,16 +163,6 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
         LOG.warn("Error closing JSON reader", e);
       } finally {
         this.jsonReader = null;
-      }
-    }
-  }
-
-  public void closeRestAPIResponse(RestAPIResponse resp) {
-    if (resp != null) {
-      try {
-        resp.close();
-      } catch (IOException e) {
-        LOG.warn("Error closing RestAPIResponse", e);
       }
     }
   }

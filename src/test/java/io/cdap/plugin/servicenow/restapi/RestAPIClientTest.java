@@ -40,14 +40,16 @@ public class RestAPIClientTest {
     Mockito.when(httpResponse.getStatusLine()).thenReturn(statusLine);
 
     CloseableHttpClient httpClient = Mockito.mock(CloseableHttpClient.class);
+    HttpClientBuilder httpClientBuilder = Mockito.mock(HttpClientBuilder.class);
+    PowerMockito.mockStatic(HttpClientBuilder.class);
+    PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
+    Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
     Mockito.when(httpClient.execute(Mockito.any())).thenReturn(httpResponse);
 
     ServiceNowTableAPIRequestBuilder builder = new ServiceNowTableAPIRequestBuilder("url");
     RestAPIRequest request = builder.build();
 
     ServiceNowConnectorConfig config = Mockito.mock(ServiceNowConnectorConfig.class);
-    PowerMockito.stub(PowerMockito.method(RestAPIClient.class, "getHttpClient"))
-      .toReturn(httpClient);
     ServiceNowTableAPIClientImpl client = new ServiceNowTableAPIClientImpl(config, true);
     RestAPIResponse actualResponse = client.executeGet(request);
     Assert.assertNotNull(actualResponse.getException());
@@ -62,14 +64,16 @@ public class RestAPIClientTest {
     Mockito.when(httpResponse.getStatusLine()).thenReturn(statusLine);
 
     CloseableHttpClient httpClient = Mockito.mock(CloseableHttpClient.class);
+    HttpClientBuilder httpClientBuilder = Mockito.mock(HttpClientBuilder.class);
+    PowerMockito.mockStatic(HttpClientBuilder.class);
+    PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
+    Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
     Mockito.when(httpClient.execute(Mockito.any())).thenReturn(httpResponse);
 
     ServiceNowTableAPIRequestBuilder builder = new ServiceNowTableAPIRequestBuilder("url");
     RestAPIRequest request = builder.build();
 
     ServiceNowConnectorConfig config = Mockito.mock(ServiceNowConnectorConfig.class);
-    PowerMockito.stub(PowerMockito.method(RestAPIClient.class, "getHttpClient"))
-      .toReturn(httpClient);
     ServiceNowTableAPIClientImpl client = new ServiceNowTableAPIClientImpl(config, true);
     RestAPIResponse actualResponse = client.executeGet(request);
     Assert.assertNotNull(actualResponse.getException());
@@ -104,6 +108,10 @@ public class RestAPIClientTest {
   @Test
   public void testExecuteGet_throwConnectTimeoutException_markAsRetryable() throws IOException {
     CloseableHttpClient httpClient = Mockito.mock(CloseableHttpClient.class);
+    HttpClientBuilder httpClientBuilder = Mockito.mock(HttpClientBuilder.class);
+    PowerMockito.mockStatic(HttpClientBuilder.class);
+    PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
+    Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
     Mockito.when(httpClient.execute(Mockito.any()))
       .thenThrow(new ConnectTimeoutException("Connection timed out"));
 
@@ -111,8 +119,6 @@ public class RestAPIClientTest {
     RestAPIRequest request = builder.build();
 
     ServiceNowConnectorConfig config = Mockito.mock(ServiceNowConnectorConfig.class);
-    PowerMockito.stub(PowerMockito.method(RestAPIClient.class, "getHttpClient"))
-      .toReturn(httpClient);
     ServiceNowTableAPIClientImpl client = new ServiceNowTableAPIClientImpl(config, true);
     RestAPIResponse actualResponse = client.executeGet(request);
     Assert.assertNotNull(actualResponse.getException());
@@ -125,6 +131,10 @@ public class RestAPIClientTest {
   @Test
   public void testExecuteGet_throwSocketException_markAsRetryable() throws IOException {
     CloseableHttpClient httpClient = Mockito.mock(CloseableHttpClient.class);
+    HttpClientBuilder httpClientBuilder = Mockito.mock(HttpClientBuilder.class);
+    PowerMockito.mockStatic(HttpClientBuilder.class);
+    PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
+    Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
     Mockito.when(httpClient.execute(Mockito.any()))
       .thenThrow(new SocketException());
 
@@ -132,8 +142,6 @@ public class RestAPIClientTest {
     RestAPIRequest request = builder.build();
 
     ServiceNowConnectorConfig config = Mockito.mock(ServiceNowConnectorConfig.class);
-    PowerMockito.stub(PowerMockito.method(RestAPIClient.class, "getHttpClient"))
-      .toReturn(httpClient);
     ServiceNowTableAPIClientImpl client = new ServiceNowTableAPIClientImpl(config, true);
     RestAPIResponse actualResponse = client.executeGet(request);
     Assert.assertNotNull(actualResponse.getException());

@@ -20,6 +20,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowAPIException;
 import io.cdap.plugin.servicenow.util.ServiceNowConstants;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -27,6 +29,7 @@ import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -49,18 +52,19 @@ public class RestAPIResponse {
   private static final String REST_ERROR_MESSAGE = "Rest Api response has errors. Error message: %s.";
   private static final Set<Integer> SUCCESS_CODES = new HashSet<>(Arrays.asList(HttpStatus.SC_CREATED,
                                                                                 HttpStatus.SC_OK));
+  private static final long MAX_PAGE_BYTES = 50L * 1024 * 1024; // 50 MB (Upper Bound)
   private final Map<String, String> headers;
   @Nullable private final ServiceNowAPIException exception;
 
-  // Input stream of the response body.
-  private InputStream responseStream;
+  // New: store byte array
+  private byte[] responseBody;
 
   public RestAPIResponse(
     Map<String, String> headers,
-    InputStream responseStream,
+    byte[] responseBody,
     @Nullable ServiceNowAPIException exception) {
     this.headers = headers;
-    this.responseStream = responseStream;
+    this.responseBody = responseBody;
     this.exception = exception;
   }
 
@@ -98,21 +102,23 @@ public class RestAPIResponse {
     }
   }
 
-  public void close() throws IOException {
-    if (responseStream != null) {
-      responseStream.close();
-    }
-  }
-
   public static RestAPIResponse prepareResponse(HttpResponse httpResponse, Map<String, String> headers,
       ServiceNowAPIException serviceNowAPIException) throws IOException {
     HttpEntity httpEntity = httpResponse.getEntity();
+    byte[] responseBody = new byte[0];
     InputStream inputStream;
     if (httpEntity != null) {
       inputStream = httpEntity.getContent();
-      return new RestAPIResponse(headers, inputStream, serviceNowAPIException);
+      BoundedInputStream boundedInputStream = new BoundedInputStream(
+        inputStream, MAX_PAGE_BYTES + 1); // +1 to detect overflow
+      responseBody = IOUtils.toByteArray(boundedInputStream);
+      if (responseBody.length > MAX_PAGE_BYTES) {
+        throw new IOException(
+          "ServiceNow page exceeded max allowed size: " + MAX_PAGE_BYTES);
+      }
+      return new RestAPIResponse(headers, responseBody, serviceNowAPIException);
     } else {
-      return new RestAPIResponse(headers, null, serviceNowAPIException);
+      return new RestAPIResponse(headers, responseBody, serviceNowAPIException);
     }
   }
 
@@ -150,15 +156,24 @@ public class RestAPIResponse {
   }
 
   @Nullable
+  public byte[] getResponseBody() {
+    return responseBody;
+  }
+
+  /**
+   * Returns a fresh InputStream for the response body. Caller must close the stream.
+   * @return InputStream
+   */
+  public InputStream getBodyAsStream() {
+    return responseBody == null ? null : new ByteArrayInputStream(responseBody);
+  }
+
+  @Nullable
   public ServiceNowAPIException getException() {
     return exception;
   }
 
   public boolean hasException() {
     return exception != null;
-  }
-
-  public InputStream getResponseStream() {
-    return responseStream;
   }
 }

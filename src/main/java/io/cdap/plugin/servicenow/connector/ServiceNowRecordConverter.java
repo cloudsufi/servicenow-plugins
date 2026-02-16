@@ -16,7 +16,6 @@
 package io.cdap.plugin.servicenow.connector;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.gson.JsonObject;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.format.UnexpectedFormatException;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -28,13 +27,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Utility class for converting the record from ServiceNow data type to CDAP schema data types
@@ -85,10 +82,9 @@ public class ServiceNowRecordConverter {
       DateTimeFormatter.ofPattern("HH:mm")
     ));
 
-  public static void convertToValue(String fieldName, Schema fieldSchema, JsonObject record,
+  public static void convertToValue(String fieldName, Schema fieldSchema, Map<String, String> record,
                                     StructuredRecord.Builder recordBuilder) {
-    String fieldValue = record.has(fieldName) && !record.get(fieldName).isJsonNull() ? record.get(fieldName)
-      .getAsString() : null;
+    String fieldValue = record.get(fieldName);
     if (fieldValue == null || fieldValue.isEmpty()) {
       // Set 'null' value as it is
       recordBuilder.set(fieldName, null);

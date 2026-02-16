@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.servicenow.source;
 
-import com.google.gson.JsonObject;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.format.UnexpectedFormatException;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -44,9 +43,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -135,10 +132,10 @@ public class ServiceNowRecordReaderTest {
     Schema fieldSchema = Schema.recordOf("record", Schema.Field.of("TimeField",
                                                                    Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)));
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(fieldSchema);
-    JsonObject jsonObject = new JsonObject();
-    jsonObject.addProperty("TimeField", "value");
+    Map<String, String> map = new HashMap<>();
+    map.put("TimeField", "value");
     thrown.expect(IllegalStateException.class);
-    ServiceNowRecordConverter.convertToValue("TimeField", fieldSchema, jsonObject, recordBuilder);
+    ServiceNowRecordConverter.convertToValue("TimeField", fieldSchema, map, recordBuilder);
   }
 
   @Test
@@ -161,12 +158,12 @@ public class ServiceNowRecordReaderTest {
     );
 
     for (String value : dateTimeValues) {
-      JsonObject jsonObject = new JsonObject();
-      jsonObject.addProperty("DateTimeField", value);
+      Map<String, String> inputMap = new HashMap<>();
+      inputMap.put("DateTimeField", value);
 
       StructuredRecord.Builder recordBuilder = StructuredRecord.builder(recordSchema);
       try {
-        ServiceNowRecordConverter.convertToValue("DateTimeField", fieldSchema, jsonObject, recordBuilder);
+        ServiceNowRecordConverter.convertToValue("DateTimeField", fieldSchema, inputMap, recordBuilder);
         StructuredRecord record = recordBuilder.build();
         Assert.assertNotNull("Parsed datetime should not be null for input: " + value,
             record.get("DateTimeField"));
@@ -192,12 +189,12 @@ public class ServiceNowRecordReaderTest {
     );
 
     for (String value : dateValues) {
-      JsonObject jsonObject = new JsonObject();
-      jsonObject.addProperty("DateField", value);
+      Map<String, String> inputMap = new HashMap<>();
+      inputMap.put("DateField", value);
 
       StructuredRecord.Builder recordBuilder = StructuredRecord.builder(recordSchema);
       try {
-        ServiceNowRecordConverter.convertToValue("DateField", fieldSchema, jsonObject, recordBuilder);
+        ServiceNowRecordConverter.convertToValue("DateField", fieldSchema, inputMap, recordBuilder);
         StructuredRecord record = recordBuilder.build();
         Assert.assertNotNull("Parsed date should not be null for input: " + value,
             record.get("DateField"));
@@ -221,12 +218,12 @@ public class ServiceNowRecordReaderTest {
     );
 
     for (String value : timeValues) {
-      JsonObject jsonObject = new JsonObject();
-      jsonObject.addProperty("TimeField", value);
+      Map<String, String> inputMap = new HashMap<>();
+      inputMap.put("TimeField", value);
 
       StructuredRecord.Builder recordBuilder = StructuredRecord.builder(recordSchema);
       try {
-        ServiceNowRecordConverter.convertToValue("TimeField", fieldSchema, jsonObject, recordBuilder);
+        ServiceNowRecordConverter.convertToValue("TimeField", fieldSchema, inputMap, recordBuilder);
         StructuredRecord record = recordBuilder.build();
         Assert.assertNotNull("Parsed date should not be null for input: " + value,
             record.get("TimeField"));
@@ -308,8 +305,7 @@ public class ServiceNowRecordReaderTest {
       "  ]\n" +
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
-    InputStream inputStream = new ByteArrayInputStream(body);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(Collections.emptyMap(), inputStream, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(Collections.emptyMap(), body, null);
     PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withAnyArguments().thenReturn(restApi);
     Mockito.when(restApi.fetchTableRecordsRetryableMode(tableName, serviceNowSourceConfig.getValueType(),
       serviceNowSourceConfig.getStartDate(), serviceNowSourceConfig.getEndDate(), split.getOffset(),
@@ -385,8 +381,7 @@ public class ServiceNowRecordReaderTest {
       "  ]\n" +
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
-    InputStream inputStream = new ByteArrayInputStream(body);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(Collections.emptyMap(), inputStream, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(Collections.emptyMap(), body, null);
     PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withAnyArguments().thenReturn(restApi);
     Mockito.when(restApi.fetchTableRecordsRetryableMode(tableName, serviceNowSourceConfig.getValueType(),
       serviceNowSourceConfig.getStartDate(), serviceNowSourceConfig.getEndDate(), split.getOffset(),
@@ -427,8 +422,7 @@ public class ServiceNowRecordReaderTest {
       "\"status\": \"failure\"\n" +
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
-    InputStream inputStream = new ByteArrayInputStream(body);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(Collections.emptyMap(), inputStream, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(Collections.emptyMap(), body, null);
     PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withAnyArguments().thenReturn(restApi);
     Mockito.when(restApi.fetchTableRecordsRetryableMode(tableName, serviceNowSourceConfig.getValueType(),
                                            serviceNowSourceConfig.getStartDate(), serviceNowSourceConfig.getEndDate(),

@@ -311,7 +311,7 @@ public class ServiceNowSinkConfigTest {
     Mockito.when(mockResponse.getStatusLine()).thenReturn(Mockito.mock(StatusLine.class));
     Mockito.when(mockResponse.getStatusLine().getStatusCode()).thenReturn(httpStatus);
     RestAPIResponse restAPIResponse = new RestAPIResponse(
-        headers, inputStream, new ServiceNowAPIException("", mockResponse));
+        headers, body, new ServiceNowAPIException("", mockResponse));
     OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
     PowerMockito.whenNew(OAuthClient.class).
       withArguments(Mockito.any(URLConnectionClient.class)).thenReturn(oAuthClient);
@@ -331,7 +331,7 @@ public class ServiceNowSinkConfigTest {
     PowerMockito.when(RestAPIResponse.parse(httpResponse, null)).thenReturn(response);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any(RestAPIRequest.class))).thenReturn(restAPIResponse);
     Mockito.when(restApi.fetchTableSchema(Mockito.anyString(), Mockito.any(FailureCollector.class))).thenReturn(schema);
-    Mockito.when(restApi.parseSchemaResponse(restAPIResponse.getResponseStream()))
+    Mockito.when(restApi.parseSchemaResponse(restAPIResponse.getBodyAsStream()))
       .thenReturn(metadataAPISchemaResponse);
     try {
       config.validateSchema(schema, collector);
@@ -369,7 +369,7 @@ public class ServiceNowSinkConfigTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, body, null);
     OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
     PowerMockito.whenNew(OAuthClient.class).
       withArguments(Mockito.any(URLConnectionClient.class)).thenReturn(oAuthClient);
