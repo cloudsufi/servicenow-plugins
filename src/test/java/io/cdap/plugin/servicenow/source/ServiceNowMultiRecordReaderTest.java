@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.servicenow.source;
 
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.format.UnexpectedFormatException;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -24,7 +25,9 @@ import io.cdap.plugin.servicenow.apiclient.ServiceNowAPIException;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowTableDataResponse;
 import io.cdap.plugin.servicenow.connector.ServiceNowRecordConverter;
+import io.cdap.plugin.servicenow.restapi.RestAPIClient;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.junit.Assert;
@@ -38,7 +41,9 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -103,9 +108,9 @@ public class ServiceNowMultiRecordReaderTest {
     Schema fieldSchema = Schema.recordOf("record", Schema.Field.of("TimeField",
                                                                    Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)));
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(fieldSchema);
-    Map<String, String> map = new HashMap<>();
-    map.put("TimeField", "value");
-    ServiceNowRecordConverter.convertToValue("TimeField", fieldSchema, map, recordBuilder);
+    JsonObject record = new JsonObject();
+    record.addProperty("TimeField", "value");
+    ServiceNowRecordConverter.convertToValue("TimeField", fieldSchema, record, recordBuilder);
   }
 
   @Test
@@ -178,7 +183,8 @@ public class ServiceNowMultiRecordReaderTest {
       "  ]\n" +
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(Collections.emptyMap(), body, null);
+    InputStream inputStream = new ByteArrayInputStream(body);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(Collections.emptyMap(), inputStream, null);
     PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withAnyArguments().thenReturn(restApi);
     Mockito.when(restApi.fetchTableRecordsRetryableMode(tableName, serviceNowMultiSourceConfig.getValueType(),
       serviceNowMultiSourceConfig.getStartDate(), serviceNowMultiSourceConfig.getEndDate(), split.getOffset(),
@@ -213,6 +219,9 @@ public class ServiceNowMultiRecordReaderTest {
             .setTableNameField("tablename")
             .buildMultiSource();
 
+    CloseableHttpClient mockHttpClient = Mockito.mock(CloseableHttpClient.class);
+    PowerMockito.stub(PowerMockito.method(RestAPIClient.class, "getHttpClient"))
+      .toReturn(mockHttpClient);
     String tableName = serviceNowMultiSourceConfig.getTableNames();
     ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
     ServiceNowInputSplit split = new ServiceNowInputSplit(tableName, 1);

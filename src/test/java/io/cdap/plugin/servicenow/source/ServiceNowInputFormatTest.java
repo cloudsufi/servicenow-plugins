@@ -17,6 +17,7 @@
 
 package io.cdap.plugin.servicenow.source;
 
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.servicenow.connector.ServiceNowConnectorConfig;
@@ -74,10 +75,10 @@ public class ServiceNowInputFormatTest {
     SourceQueryMode mode = SourceQueryMode.TABLE;
     ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
     PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withAnyArguments().thenReturn(restApi);
-    List<Map<String, String>> result = new ArrayList<>();
-    Map<String, String> map = new HashMap<>();
-    map.put("key", "value");
-    result.add(map);
+    JsonObject jsonObject = new JsonObject();
+    List<JsonObject> result = new ArrayList<>();
+    jsonObject.addProperty("key", "value");
+    result.add(jsonObject);
     Map<String, String> headers = new HashMap<>();
     String responseBody = "{\n" +
       "    \"result\": [\n" +
@@ -147,9 +148,9 @@ public class ServiceNowInputFormatTest {
       "\"backgroundElementId\",\"type\":\"long\"},{\"name\":\"bgOrderPos\",\"type\":\"long\"},{\"name\":" +
       "\"description\",\"type\":[\"string\",\"null\"]},{\"name\":\"userId\",\"type\":\"string\"}]}";
     Schema schema = Schema.parseJson(schemaString);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, body, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
-    Mockito.when(restApi.parseResponseToResultListOfMap(restAPIResponse.getBodyAsStream())).thenReturn(result);
+    Mockito.when(restApi.parseResponseToResultListOfMap(restAPIResponse.getResponseStream())).thenReturn(result);
     Mockito.when(restApi.fetchTableSchema("table", SourceValueType.SHOW_ACTUAL_VALUE)).thenReturn(schema);
     OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
     PowerMockito.whenNew(OAuthClient.class).
@@ -180,10 +181,10 @@ public class ServiceNowInputFormatTest {
     SourceQueryMode mode = SourceQueryMode.REPORTING;
     ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
     PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withAnyArguments().thenReturn(restApi);
-    List<Map<String, String>> result = new ArrayList<>();
-    Map<String, String> map = new HashMap<>();
-    map.put("key", "value");
-    result.add(map);
+    JsonObject jsonObject = new JsonObject();
+    List<JsonObject> result = new ArrayList<>();
+    jsonObject.addProperty("key", "value");
+    result.add(jsonObject);
     Map<String, String> headers = new HashMap<>();
     String responseBody = "{\n" +
       "    \"result\": [\n" +
@@ -253,9 +254,9 @@ public class ServiceNowInputFormatTest {
       "\"backgroundElementId\",\"type\":\"long\"},{\"name\":\"bgOrderPos\",\"type\":\"long\"},{\"name\":" +
       "\"description\",\"type\":[\"string\",\"null\"]},{\"name\":\"userId\",\"type\":\"string\"}]}";
     Schema schema = Schema.parseJson(schemaString);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, body, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
-    Mockito.when(restApi.parseResponseToResultListOfMap(restAPIResponse.getBodyAsStream())).thenReturn(result);
+    Mockito.when(restApi.parseResponseToResultListOfMap(restAPIResponse.getResponseStream())).thenReturn(result);
     Mockito.when(restApi.fetchTableSchema("proc_po", SourceValueType.SHOW_ACTUAL_VALUE)).thenReturn(schema);
     Mockito.when(restApi.fetchTableSchema("proc_po_item",
                                           SourceValueType.SHOW_ACTUAL_VALUE)).thenReturn(schema);
@@ -290,19 +291,19 @@ public class ServiceNowInputFormatTest {
     SourceQueryMode mode = SourceQueryMode.TABLE;
     ServiceNowTableAPIClientImpl restApi = Mockito.mock(ServiceNowTableAPIClientImpl.class);
     PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withAnyArguments().thenReturn(restApi);
-    List<Map<String, String>> result = new ArrayList<>();
-    Map<String, String> map = new HashMap<>();
-    map.put("key", "value");
-    result.add(map);
+    JsonObject jsonObject = new JsonObject();
+    List<JsonObject> result = new ArrayList<>();
+    jsonObject.addProperty("key", "value");
+    result.add(jsonObject);
     Map<String, String> headers = new HashMap<>();
     String responseBody = "{\n" +
       "    \"result\": []\n" +
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, body, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
-    Mockito.when(restApi.parseResponseToResultListOfMap(restAPIResponse.getBodyAsStream())).thenReturn(result);
+    Mockito.when(restApi.parseResponseToResultListOfMap(restAPIResponse.getResponseStream())).thenReturn(result);
     OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
     PowerMockito.mockStatic(ServiceNowInputFormat.class);
     PowerMockito.whenNew(OAuthClient.class).

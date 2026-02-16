@@ -16,6 +16,7 @@
 package io.cdap.plugin.servicenow.connector;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
@@ -135,7 +136,7 @@ public class ServiceNowConnector implements DirectConnector {
     ServiceNowTableAPIClientImpl serviceNowTableAPIClient = new ServiceNowTableAPIClientImpl(config, true);
     RestAPIResponse apiResponse =
         serviceNowTableAPIClient.executeGetWithRetries(requestBuilder.build());
-    return GSON.fromJson(serviceNowTableAPIClient.createJsonReader(apiResponse.getBodyAsStream()), TableList.class);
+    return GSON.fromJson(serviceNowTableAPIClient.createJsonReader(apiResponse.getResponseStream()), TableList.class);
   }
 
   public ConnectorSpec generateSpec(ConnectorContext connectorContext, ConnectorSpecRequest connectorSpecRequest) {
@@ -183,8 +184,8 @@ public class ServiceNowConnector implements DirectConnector {
     requestBuilder.setAuthHeader(accessToken);
     requestBuilder.setResponseHeaders(ServiceNowConstants.HEADER_NAME_TOTAL_COUNT);
     RestAPIResponse apiResponse = serviceNowTableAPIClient.executeGetWithRetries(requestBuilder.build());
-    List<Map<String, String>> result = serviceNowTableAPIClient.parseResponseToResultListOfMap
-      (apiResponse.getBodyAsStream());
+    List<JsonObject> result = serviceNowTableAPIClient.parseResponseToResultListOfMap
+      (apiResponse.getResponseStream());
     List<StructuredRecord> recordList = new ArrayList<>();
     Schema schema = getSchema(tableName);
     if (schema != null) {
