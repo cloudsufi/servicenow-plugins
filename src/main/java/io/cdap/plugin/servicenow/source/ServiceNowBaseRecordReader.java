@@ -51,6 +51,7 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
   protected JsonObject row;
   protected final Gson gson = new Gson();
   protected JsonReader jsonReader = null;
+  protected RestAPIResponse currentResponse = null;
 
   public ServiceNowBaseRecordReader() {
   }
@@ -93,9 +94,10 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
   
   public boolean openNextPage() throws IOException, ServiceNowAPIException {
     closeCurrentPage();
-    RestAPIResponse resp = fetchData();
-    InputStream in = resp.getResponseStream();
+    this.currentResponse = fetchData();
+    InputStream in = this.currentResponse.getResponseStream();
     if (in == null) {
+      closeCurrentPage();
       return false;
     }
     this.jsonReader = new JsonReader(new InputStreamReader(in, StandardCharsets.UTF_8));
@@ -137,7 +139,6 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
         jsonReader.endArray();
         // cleanup
         closeCurrentPage();
-        closeRestAPIResponse(resp);
         return false;
       }
     } catch (IOException e) {
@@ -151,6 +152,7 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
   }
 
   public void closeCurrentPage() {
+    LOG.info("Closing current page for table {}", tableName);
     if (this.jsonReader != null) {
       try {
         this.jsonReader.close();
@@ -160,14 +162,14 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
         this.jsonReader = null;
       }
     }
-  }
 
-  public void closeRestAPIResponse(RestAPIResponse resp) {
-    if (resp != null) {
+    if (this.currentResponse != null) {
       try {
-        resp.close();
+        this.currentResponse.close();
       } catch (IOException e) {
-        LOG.warn("Error closing RestAPIResponse", e);
+        LOG.warn("Error closing RestAPIResponse for table {}", tableName, e);
+      } finally {
+        this.currentResponse = null;
       }
     }
   }
@@ -184,6 +186,11 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
     return pos / (float) split.getLength();
   }
 
+  public int getPos() {
+    return pos;
+  }
+
   public void close() throws IOException {
+    closeCurrentPage();
   }
 }

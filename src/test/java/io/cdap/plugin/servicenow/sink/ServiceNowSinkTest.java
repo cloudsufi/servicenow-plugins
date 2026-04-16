@@ -30,9 +30,14 @@ import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.sink.transform.ServiceNowTransformer;
 import io.cdap.plugin.servicenow.source.ServiceNowBaseSourceConfig;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.message.BasicStatusLine;
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
 import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
@@ -94,8 +99,11 @@ public class ServiceNowSinkTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
+    HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200,
+      "OK"));
+    httpResponse.setEntity(new InputStreamEntity(inputStream, body.length));
     MockFailureCollector collector = new MockFailureCollector();
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, httpResponse, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
     serviceNowSink.configurePipeline(mockPipelineConfigurer);
     Assert.assertNull(restAPIResponse.getException());
@@ -128,12 +136,15 @@ public class ServiceNowSinkTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
+    HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200,
+      "OK"));
+    httpResponse.setEntity(new InputStreamEntity(inputStream, body.length));
     Schema schema = Schema.recordOf("record",
                                     Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
                                     Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)));
     Emitter<KeyValue<NullWritable, JsonObject>> emitter = Mockito.mock(Emitter.class);
     Mockito.when(context.getInputSchema()).thenReturn(schema);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, httpResponse, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
     OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
     PowerMockito.whenNew(OAuthClient.class).
@@ -149,8 +160,8 @@ public class ServiceNowSinkTest {
     PowerMockito.mockStatic(RestAPIResponse.class);
     PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
     Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
-    CloseableHttpResponse httpResponse = Mockito.mock(CloseableHttpResponse.class);
-    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(httpResponse);
+    CloseableHttpResponse closeableHttpResponse = Mockito.mock(CloseableHttpResponse.class);
+    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(closeableHttpResponse);
     PowerMockito.when(RestAPIResponse.parse(ArgumentMatchers.any(), ArgumentMatchers.anyString())).
       thenReturn(response);
     BatchRuntimeContext batchRuntimeContext = Mockito.mock(BatchRuntimeContext.class);

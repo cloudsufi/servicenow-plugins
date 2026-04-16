@@ -27,7 +27,12 @@ import io.cdap.plugin.servicenow.apiclient.ServiceNowTableDataResponse;
 import io.cdap.plugin.servicenow.connector.ServiceNowRecordConverter;
 import io.cdap.plugin.servicenow.restapi.RestAPIClient;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.message.BasicStatusLine;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.junit.Assert;
@@ -184,7 +189,10 @@ public class ServiceNowMultiRecordReaderTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(Collections.emptyMap(), inputStream, null);
+    HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200,
+      "OK"));
+    httpResponse.setEntity(new InputStreamEntity(inputStream, body.length));
+    RestAPIResponse restAPIResponse = new RestAPIResponse(Collections.emptyMap(), httpResponse, null);
     PowerMockito.whenNew(ServiceNowTableAPIClientImpl.class).withAnyArguments().thenReturn(restApi);
     Mockito.when(restApi.fetchTableRecordsRetryableMode(tableName, serviceNowMultiSourceConfig.getValueType(),
       split.getFilterQuery(), split.getOffset(),

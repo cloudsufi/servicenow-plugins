@@ -25,9 +25,14 @@ import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.util.SourceApplication;
 import io.cdap.plugin.servicenow.util.SourceQueryMode;
 import io.cdap.plugin.servicenow.util.SourceValueType;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.message.BasicStatusLine;
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
 import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
@@ -144,11 +149,14 @@ public class ServiceNowInputFormatTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
+    HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200,
+      "OK"));
+    httpResponse.setEntity(new InputStreamEntity(inputStream, body.length));
     String schemaString = "{\"type\":\"record\",\"name\":\"ServiceNowColumnMetaData\",\"fields\":[{\"name\":" +
       "\"backgroundElementId\",\"type\":\"long\"},{\"name\":\"bgOrderPos\",\"type\":\"long\"},{\"name\":" +
       "\"description\",\"type\":[\"string\",\"null\"]},{\"name\":\"userId\",\"type\":\"string\"}]}";
     Schema schema = Schema.parseJson(schemaString);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, httpResponse, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
     Mockito.when(restApi.fetchTableSchema("table", SourceValueType.SHOW_ACTUAL_VALUE)).thenReturn(schema);
     OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
@@ -165,8 +173,8 @@ public class ServiceNowInputFormatTest {
     PowerMockito.mockStatic(RestAPIResponse.class);
     PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
     Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
-    CloseableHttpResponse httpResponse = Mockito.mock(CloseableHttpResponse.class);
-    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(httpResponse);
+    CloseableHttpResponse closeableHttpResponse = Mockito.mock(CloseableHttpResponse.class);
+    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(closeableHttpResponse);
     PowerMockito.when(RestAPIResponse.parse(ArgumentMatchers.any(), ArgumentMatchers.anyString())).
       thenReturn(response);
     SourceApplication application = SourceApplication.PROCUREMENT;
@@ -249,11 +257,14 @@ public class ServiceNowInputFormatTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
+    HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200,
+      "OK"));
+    httpResponse.setEntity(new InputStreamEntity(inputStream, body.length));
     String schemaString = "{\"type\":\"record\",\"name\":\"ServiceNowColumnMetaData\",\"fields\":[{\"name\":" +
       "\"backgroundElementId\",\"type\":\"long\"},{\"name\":\"bgOrderPos\",\"type\":\"long\"},{\"name\":" +
       "\"description\",\"type\":[\"string\",\"null\"]},{\"name\":\"userId\",\"type\":\"string\"}]}";
     Schema schema = Schema.parseJson(schemaString);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, httpResponse, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
     Mockito.when(restApi.fetchTableSchema("proc_po", SourceValueType.SHOW_ACTUAL_VALUE)).thenReturn(schema);
     Mockito.when(restApi.fetchTableSchema("proc_po_item",
@@ -274,8 +285,8 @@ public class ServiceNowInputFormatTest {
     PowerMockito.mockStatic(RestAPIResponse.class);
     PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
     Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
-    CloseableHttpResponse httpResponse = Mockito.mock(CloseableHttpResponse.class);
-    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(httpResponse);
+    CloseableHttpResponse closeableHttpResponse = Mockito.mock(CloseableHttpResponse.class);
+    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(closeableHttpResponse);
     PowerMockito.when(RestAPIResponse.parse(ArgumentMatchers.any(), ArgumentMatchers.anyString())).
       thenReturn(response);
     SourceApplication application = SourceApplication.PROCUREMENT;
@@ -299,7 +310,10 @@ public class ServiceNowInputFormatTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
+    HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200,
+      "OK"));
+    httpResponse.setEntity(new InputStreamEntity(inputStream, body.length));
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, httpResponse, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
     OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
     PowerMockito.mockStatic(ServiceNowInputFormat.class);
@@ -316,8 +330,8 @@ public class ServiceNowInputFormatTest {
     PowerMockito.mockStatic(RestAPIResponse.class);
     PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
     Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
-    CloseableHttpResponse httpResponse = Mockito.mock(CloseableHttpResponse.class);
-    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(httpResponse);
+    CloseableHttpResponse closeableHttpResponse = Mockito.mock(CloseableHttpResponse.class);
+    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(closeableHttpResponse);
     PowerMockito.when(RestAPIResponse.parse(ArgumentMatchers.any(), ArgumentMatchers.anyString())).
       thenReturn(response);
     SourceApplication application = SourceApplication.PROCUREMENT;

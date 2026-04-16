@@ -59,7 +59,7 @@ public abstract class RestAPIClient {
   private static final int DEFAULT_CONNECT_TIMEOUT_MS = 120000;
 
   /* Read Timeout in ms for waiting for data after the connection is established */
-  private static final int DEFAULT_READ_TIMEOUT_MS = 300000;
+  private static final int DEFAULT_READ_TIMEOUT_MS = 90000;
 
   /* Maximum total connections. */
   private static final int MAX_CONNECTIONS = 200;

@@ -87,6 +87,8 @@ public class ServiceNowRecordReader extends ServiceNowBaseRecordReader {
 
     @Override
     RestAPIResponse fetchData() throws ServiceNowAPIException {
+    LOG.info("Fetching data for table: {}, with offset: {} and page size: {}", tableName, split.getOffset(),
+      pluginConf.getPageSize());
     // Get the table data
     RestAPIResponse restAPIResponse = restApi.fetchTableRecordsRetryableMode(tableName, pluginConf.getValueType(),
      split.getFilterQuery() , split.getOffset(), pluginConf.getPageSize());

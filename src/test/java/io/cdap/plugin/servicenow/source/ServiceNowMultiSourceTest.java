@@ -26,9 +26,14 @@ import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowTableAPIClientImpl;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.util.ServiceNowTableInfo;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.message.BasicStatusLine;
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
 import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
@@ -160,7 +165,10 @@ public class ServiceNowMultiSourceTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
+    HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200,
+      "OK"));
+    httpResponse.setEntity(new InputStreamEntity(inputStream, body.length));
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, httpResponse, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
     serviceNowMultiSource.configurePipeline(mockPipelineConfigurer);
     Assert.assertNull(mockPipelineConfigurer.getOutputSchema());
@@ -181,7 +189,10 @@ public class ServiceNowMultiSourceTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
+    HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200,
+      "OK"));
+    httpResponse.setEntity(new InputStreamEntity(inputStream, body.length));
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, httpResponse, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
     try {
       serviceNowMultiSource.configurePipeline(mockPipelineConfigurer);
@@ -284,9 +295,12 @@ public class ServiceNowMultiSourceTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
+    HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200,
+      "OK"));
+    httpResponse.setEntity(new InputStreamEntity(inputStream, body.length));
     PowerMockito.mockStatic(ServiceNowMultiInputFormat.class);
     Mockito.when(ServiceNowMultiInputFormat.setInput(Mockito.any(), Mockito.any())).thenReturn((tableInfo));
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, httpResponse, null);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any())).thenReturn(restAPIResponse);
     OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
     PowerMockito.whenNew(OAuthClient.class).
@@ -303,8 +317,8 @@ public class ServiceNowMultiSourceTest {
     PowerMockito.mockStatic(ServiceNowInputFormat.class);
     PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
     Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
-    CloseableHttpResponse httpResponse = Mockito.mock(CloseableHttpResponse.class);
-    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(httpResponse);
+    CloseableHttpResponse closeableHttpResponse = Mockito.mock(CloseableHttpResponse.class);
+    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(closeableHttpResponse);
     PowerMockito.when(RestAPIResponse.parse(ArgumentMatchers.any(), ArgumentMatchers.anyString())).
       thenReturn(response);
     serviceNowMultiSource.prepareRun(context);

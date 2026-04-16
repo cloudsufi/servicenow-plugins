@@ -32,10 +32,13 @@ import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.util.ServiceNowConstants;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
@@ -301,6 +304,9 @@ public class ServiceNowSinkConfigTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
+    HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200,
+      "OK"));
+    httpResponse.setEntity(new InputStreamEntity(inputStream, body.length));
     MetadataAPISchemaField schemaField = new MetadataAPISchemaField("Class", "sys_class_name",
       "sys_class_name", "sys_class_name");
     Map<String, MetadataAPISchemaField> columns = new HashMap<>();
@@ -311,7 +317,7 @@ public class ServiceNowSinkConfigTest {
     Mockito.when(mockResponse.getStatusLine()).thenReturn(Mockito.mock(StatusLine.class));
     Mockito.when(mockResponse.getStatusLine().getStatusCode()).thenReturn(httpStatus);
     RestAPIResponse restAPIResponse = new RestAPIResponse(
-        headers, inputStream, new ServiceNowAPIException("", mockResponse));
+        headers, httpResponse, new ServiceNowAPIException("", mockResponse));
     OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
     PowerMockito.whenNew(OAuthClient.class).
       withArguments(Mockito.any(URLConnectionClient.class)).thenReturn(oAuthClient);
@@ -326,9 +332,9 @@ public class ServiceNowSinkConfigTest {
     PowerMockito.mockStatic(RestAPIResponse.class);
     PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
     Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
-    CloseableHttpResponse httpResponse = Mockito.mock(CloseableHttpResponse.class);
-    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(httpResponse);
-    PowerMockito.when(RestAPIResponse.parse(httpResponse, null)).thenReturn(response);
+    CloseableHttpResponse closeableHttpResponse = Mockito.mock(CloseableHttpResponse.class);
+    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(closeableHttpResponse);
+    PowerMockito.when(RestAPIResponse.parse(closeableHttpResponse, null)).thenReturn(response);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any(RestAPIRequest.class))).thenReturn(restAPIResponse);
     Mockito.when(restApi.fetchTableSchema(Mockito.anyString(), Mockito.any(FailureCollector.class))).thenReturn(schema);
     Mockito.when(restApi.parseSchemaResponse(restAPIResponse.getResponseStream()))
@@ -369,7 +375,10 @@ public class ServiceNowSinkConfigTest {
       "}";
     byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
     InputStream inputStream = new ByteArrayInputStream(body);
-    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, inputStream, null);
+    HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200,
+      "OK"));
+    httpResponse.setEntity(new InputStreamEntity(inputStream, body.length));
+    RestAPIResponse restAPIResponse = new RestAPIResponse(headers, httpResponse, null);
     OAuthClient oAuthClient = Mockito.mock(OAuthClient.class);
     PowerMockito.whenNew(OAuthClient.class).
       withArguments(Mockito.any(URLConnectionClient.class)).thenReturn(oAuthClient);
@@ -384,12 +393,12 @@ public class ServiceNowSinkConfigTest {
     PowerMockito.mockStatic(RestAPIResponse.class);
     PowerMockito.when(HttpClientBuilder.create()).thenReturn(httpClientBuilder);
     Mockito.when(httpClientBuilder.build()).thenReturn(httpClient);
-    CloseableHttpResponse httpResponse = Mockito.mock(CloseableHttpResponse.class);
+    CloseableHttpResponse closeableHttpResponse = Mockito.mock(CloseableHttpResponse.class);
     StatusLine statusLine = Mockito.mock(BasicStatusLine.class);
     Mockito.when(statusLine.getStatusCode()).thenReturn(HttpStatus.SC_OK);
-    Mockito.when(httpResponse.getStatusLine()).thenReturn(statusLine);
-    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(httpResponse);
-    PowerMockito.when(RestAPIResponse.parse(httpResponse, null)).thenReturn(response);
+    Mockito.when(closeableHttpResponse.getStatusLine()).thenReturn(statusLine);
+    Mockito.when(httpClient.execute(Mockito.any())).thenReturn(closeableHttpResponse);
+    PowerMockito.when(RestAPIResponse.parse(closeableHttpResponse, null)).thenReturn(response);
     Mockito.when(restApi.executeGetWithRetries(Mockito.any(RestAPIRequest.class))).thenReturn(restAPIResponse);
     Mockito.when(restApi.fetchTableSchema("tableName", collector)).
       thenReturn(schema);

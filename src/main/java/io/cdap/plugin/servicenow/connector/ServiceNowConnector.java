@@ -108,7 +108,7 @@ public class ServiceNowConnector implements DirectConnector {
    * Browse Details for the given AccessToken.
    */
   public BrowseDetail browse(ConnectorContext connectorContext,
-                             String accessToken) throws ServiceNowAPIException {
+                             String accessToken) throws ServiceNowAPIException, IOException {
     int count = 0;
     FailureCollector collector = connectorContext.getFailureCollector();
     config.validateCredentialsFields(collector);
@@ -131,7 +131,7 @@ public class ServiceNowConnector implements DirectConnector {
   /**
    * @return the list of tables.
    */
-  private TableList listTables(String accessToken) throws ServiceNowAPIException {
+  private TableList listTables(String accessToken) throws ServiceNowAPIException, IOException {
     ServiceNowTableAPIRequestBuilder requestBuilder = new ServiceNowTableAPIRequestBuilder(
       config.getRestApiEndpoint(), OBJECT_TABLE_LIST, false, SchemaType.SCHEMA_API_BASED);
     requestBuilder.setAuthHeader(accessToken);

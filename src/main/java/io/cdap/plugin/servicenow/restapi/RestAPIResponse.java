@@ -24,6 +24,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,15 +52,15 @@ public class RestAPIResponse {
   private final Map<String, String> headers;
   @Nullable private final ServiceNowAPIException exception;
 
-  // Input stream of the response body.
-  private InputStream responseStream;
+  // Keep reference of HttpResponse for error handling, as it needs to be closed after consuming the response stream.
+  private HttpResponse httpResponse;
 
   public RestAPIResponse(
     Map<String, String> headers,
-    InputStream responseStream,
+    HttpResponse httpResponse,
     @Nullable ServiceNowAPIException exception) {
     this.headers = headers;
-    this.responseStream = responseStream;
+    this.httpResponse = httpResponse;
     this.exception = exception;
   }
 
@@ -88,22 +89,27 @@ public class RestAPIResponse {
 
     ServiceNowAPIException serviceNowAPIException = validateHttpResponse(httpResponse);
     if (serviceNowAPIException != null) {
-      return new RestAPIResponse(headers, null, serviceNowAPIException);
+      return new RestAPIResponse(headers, httpResponse, serviceNowAPIException);
     }
-    try {
-      return prepareResponse(httpResponse, headers, serviceNowAPIException);
-    } catch (IOException e) {
-      return new RestAPIResponse(headers, null, new ServiceNowAPIException(e, httpResponse));
-    }
+    return new RestAPIResponse(headers, httpResponse, null);
   }
 
   public void close() throws IOException {
-    if (responseStream != null) {
-      responseStream.close();
+    try {
+      InputStream responseStream = getResponseStream();
+      if (responseStream != null) {
+        LOG.info("Closing response stream");
+        responseStream.close();
+      }
+    } finally {
+      if (httpResponse instanceof CloseableHttpResponse) {
+        LOG.info("Closing HttpResponse");
+        ((CloseableHttpResponse) httpResponse).close();
+      }
     }
   }
 
-  public static RestAPIResponse prepareResponse(HttpResponse httpResponse, Map<String, String> headers,
+  /*public static RestAPIResponse prepareResponse(HttpResponse httpResponse, Map<String, String> headers,
       ServiceNowAPIException serviceNowAPIException) throws IOException {
     HttpEntity httpEntity = httpResponse.getEntity();
     InputStream inputStream;
@@ -113,7 +119,7 @@ public class RestAPIResponse {
     } else {
       return new RestAPIResponse(headers, null, serviceNowAPIException);
     }
-  }
+  }*/
 
   public static RestAPIResponse parse(HttpResponse httpResponse) throws IOException {
     return parse(httpResponse, new String[0]);
@@ -157,7 +163,11 @@ public class RestAPIResponse {
     return exception != null;
   }
 
-  public InputStream getResponseStream() {
-    return responseStream;
+  public InputStream getResponseStream() throws IOException {
+    if (httpResponse == null) {
+      return null;
+    }
+    HttpEntity entity = httpResponse.getEntity();
+    return (entity != null) ? entity.getContent() : null;
   }
 }

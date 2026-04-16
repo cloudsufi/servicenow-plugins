@@ -171,7 +171,7 @@ public class ServiceNowSinkAPIRequestImpl {
     }
   }
 
-  private JsonReader getJsonReader(RestAPIResponse apiResponse) {
+  private JsonReader getJsonReader(RestAPIResponse apiResponse) throws IOException {
     InputStreamReader inputStreamReader = new InputStreamReader(apiResponse.getResponseStream(),
       StandardCharsets.UTF_8);
     JsonReader jsonReader = new JsonReader(inputStreamReader);
