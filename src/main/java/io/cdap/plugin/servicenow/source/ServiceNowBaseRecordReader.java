@@ -87,9 +87,14 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
       this.row = gson.fromJson(jsonReader, JsonObject.class); // assign row
       pos++;
       return true;
+    } else if (token == JsonToken.END_ARRAY) {
+      // This is the only "Normal" end of a page
+      closeCurrentPage();
+      return false;
+    } else {
+      // If we get here, the JSON is malformed or truncated
+      throw new IOException("Unexpected JSON token " + token + " at position " + pos);
     }
-    closeCurrentPage();
-    return false;
   }
   
   public boolean openNextPage() throws IOException, ServiceNowAPIException {
@@ -110,9 +115,8 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
         top = jsonReader.peek();
         LOG.debug("Peeking JSON token for table {}: {}", tableName, top);
       } catch (IOException e) {
-        LOG.warn("Unexpected closure of stream while peeking JSON token for table {}", tableName, e);
         closeCurrentPage();
-        return false;
+        throw new IOException("Unexpected closure of stream while peeking JSON token for table {}" + tableName, e);
       }
       if (top == JsonToken.BEGIN_OBJECT) {
         jsonReader.beginObject();
