@@ -85,6 +85,11 @@ public class ServiceNowRecordReader extends ServiceNowBaseRecordReader {
     return recordBuilder.build();
   }
 
+  @Override
+  protected int getPageSize() {
+    return pluginConf.getPageSize();
+  }
+
     @Override
     RestAPIResponse fetchData() throws ServiceNowAPIException {
     LOG.info("Fetching data for table: {}, with offset: {} and page size: {}", tableName, split.getOffset(),

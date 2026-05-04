@@ -17,7 +17,9 @@
 package io.cdap.plugin.servicenow.source;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -52,9 +54,13 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
   protected final Gson gson = new Gson();
   protected JsonReader jsonReader = null;
   protected RestAPIResponse currentResponse = null;
+  protected int expectedRecordsInPage = -1;
 
   public ServiceNowBaseRecordReader() {
   }
+
+  protected abstract int getPageSize();
+
   /**
    * This method reads the next key/value pair from the input.
    * <p>
@@ -84,12 +90,21 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
 
     if (token == JsonToken.BEGIN_OBJECT) {
       LOG.debug("Reading record object for table {} at position {}", tableName, pos);
-      this.row = gson.fromJson(jsonReader, JsonObject.class); // assign row
+      try {
+        row = gson.fromJson(jsonReader, JsonObject.class); // assign row
+      } catch (JsonIOException | JsonSyntaxException e) {
+        throw new IOException("Error parsing JSON record for table " + tableName + " at position " + pos, e);
+      }
       pos++;
       return true;
     } else if (token == JsonToken.END_ARRAY) {
       // This is the only "Normal" end of a page
       closeCurrentPage();
+      if (expectedRecordsInPage > 0 && pos < expectedRecordsInPage) {
+        throw new IOException(String.format(
+          "Stream truncated for table %s: expected %d records but read only %d (offset: %d)",
+          tableName, expectedRecordsInPage, pos, split.getOffset()));
+      }
       return false;
     } else {
       // If we get here, the JSON is malformed or truncated
@@ -99,7 +114,18 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
   
   public boolean openNextPage() throws IOException, ServiceNowAPIException {
     closeCurrentPage();
+    expectedRecordsInPage = -1;
     this.currentResponse = fetchData();
+    String totalCountStr = this.currentResponse.getHeaders().get(ServiceNowConstants.HEADER_NAME_TOTAL_COUNT);
+    if (totalCountStr != null && !totalCountStr.isEmpty()) {
+      try {
+        int totalCount = Integer.parseInt(totalCountStr);
+        expectedRecordsInPage = Math.min(getPageSize(), Math.max(0, totalCount - split.getOffset()));
+      } catch (NumberFormatException ignored) {
+        LOG.error("Unable to parse total count header value '{}' for table {}. Header value is not a valid integer.",
+            totalCountStr, tableName);
+      }
+    }
     InputStream in = this.currentResponse.getResponseStream();
     if (in == null) {
       closeCurrentPage();

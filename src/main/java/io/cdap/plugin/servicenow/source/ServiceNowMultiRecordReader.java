@@ -85,6 +85,11 @@ public class ServiceNowMultiRecordReader extends ServiceNowBaseRecordReader {
   }
 
   @Override
+  protected int getPageSize() {
+    return multiSourcePluginConf.getPageSize();
+  }
+
+  @Override
   @VisibleForTesting
   RestAPIResponse fetchData() throws ServiceNowAPIException {
     // Get the table data
