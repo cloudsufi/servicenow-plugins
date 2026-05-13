@@ -109,7 +109,7 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
           // consume the stream to log the response
           String shadowResponseString = IOUtils.toString(shadowResponse.getResponseStream(), StandardCharsets.UTF_8);
           LOG.debug("Shadow response for table {} with offset {}: headers {}, body: {}", tableName, split.getOffset(),
-            shadowResponse.getHeaders(), shadowResponse.getHeaders(), shadowResponseString);
+            shadowResponse.getHeaders(), shadowResponseString);
         } catch (ServiceNowAPIException e) {
           LOG.error("Error making shadow API call for table {} with offset {}", tableName, split.getOffset(), e);
         }
