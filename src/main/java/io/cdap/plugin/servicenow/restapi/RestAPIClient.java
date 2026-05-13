@@ -59,7 +59,7 @@ public abstract class RestAPIClient {
   private static final int DEFAULT_CONNECT_TIMEOUT_MS = 120000;
 
   /* Read Timeout in ms for waiting for data after the connection is established */
-  private static final int DEFAULT_READ_TIMEOUT_MS = 90000;
+  private static final int DEFAULT_READ_TIMEOUT_MS = 120000;
 
   /* Maximum total connections. */
   private static final int MAX_CONNECTIONS = 200;
@@ -69,7 +69,7 @@ public abstract class RestAPIClient {
   private static final long CONNECTION_TTL_MINUTES = 5;
 
   /** The interval at which idle connections are scanned and closed by the background monitor. */
-  private static final long IDLE_EVICTION_SECONDS = 30;
+  private static final long IDLE_EVICTION_SECONDS = 60;
   
   private static final RequestConfig requestConfig = RequestConfig.custom()
     .setConnectTimeout(DEFAULT_CONNECT_TIMEOUT_MS)

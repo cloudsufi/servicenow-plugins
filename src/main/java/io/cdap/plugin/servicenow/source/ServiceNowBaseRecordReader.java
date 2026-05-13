@@ -27,6 +27,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.servicenow.apiclient.ServiceNowAPIException;
 import io.cdap.plugin.servicenow.restapi.RestAPIResponse;
 import io.cdap.plugin.servicenow.util.ServiceNowConstants;
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.slf4j.Logger;
@@ -101,6 +102,19 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
       // This is the only "Normal" end of a page
       closeCurrentPage();
       if (expectedRecordsInPage > 0 && pos < expectedRecordsInPage) {
+        try {
+          // Make a shadow call to ServiceNow with the same offset range to check if the page was truncated or
+          // if there were just fewer records than expected.
+          RestAPIResponse shadowResponse = fetchData();
+          // consume the stream to log the response
+          String shadowResponseString = IOUtils.toString(shadowResponse.getResponseStream(), StandardCharsets.UTF_8);
+          LOG.debug("Shadow response for table {} with offset {}: headers {}, body: {}", tableName, split.getOffset(),
+            shadowResponse.getHeaders(), shadowResponse.getHeaders(), shadowResponseString);
+        } catch (ServiceNowAPIException e) {
+          LOG.error("Error making shadow API call for table {} with offset {}", tableName, split.getOffset(), e);
+        }
+        // Map this exception to INTERNAL failure reason since this is an unexpected state that should not happen
+        // under normal circumstances and indicates a potential issue with the ServiceNow API or the network.
         throw new IOException(String.format(
           "Stream truncated for table %s: expected %d records but read only %d (offset: %d)",
           tableName, expectedRecordsInPage, pos, split.getOffset()));
@@ -132,7 +146,6 @@ public abstract class ServiceNowBaseRecordReader extends RecordReader<NullWritab
       return false;
     }
     this.jsonReader = new JsonReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-    this.jsonReader.setLenient(true);
 
     // Position the reader to the "result" array: { "result": [ ... ], ... }
     try {
